@@ -1,7 +1,6 @@
 - [Быстрый старт](#Быстрый-старт)
     - [Получение токена](#Получение-токена)
     - [Установка библиотеки](#Установка-библиотеки)
-    - [Установка библиотеки в Laravel](#Установка-библиотеки-в-Laravel)
     - [Инициализация бота](#Инициализация-бота)
 - [Информация о боте](#Информация-о-боте)
     - `GET /me` (`getBotInfo`) - [*Получение информации о боте.*](#Получение-информации-о-боте)
@@ -40,6 +39,9 @@
     - `GET /messages/{messageId}` (`getMessageById`) - [*Получение сообщения по ID.*](#Получение-сообщения-по-ID)
     - `GET /videos/{videoToken}` (`getVideoAttachmentDetails`) - [*Получение детальной информации о видео.*](#Получение-детальной-информации-о-видео)
     - `POST /answers` (`answerOnCallback`) - [*Ответ на нажатие callback-кнопки.*](#Ответ-на-нажатие-callback-кнопки)
+- [Laravel](#Laravel)
+    - [Регистрация пакета](#Регистрация-пакета)
+    - [Настройка](#Настройка)
 
 ## Быстрый старт
 
@@ -54,36 +56,6 @@
 
 ```bash
 composer require bushlanov-dev/max-bot-api-client-php
-```
-
-### Установка библиотеки в Laravel
-
-Пользователи Laravel могут зарегистрировать сервис провайдер и фасад в `config/app.php`:
-
-```php
-'providers' => [
-    // ...
-    BushlanovDev\MaxMessengerBot\Laravel\MaxBotServiceProvider::class,
-],
-// ...
-'aliases' => [
-    // ...
-    'MaxBot' => BushlanovDev\MaxMessengerBot\Laravel\MaxBotFacade::class,
-],
-```
-
-При не необходимости опубликовать конфиг выполните следующую команду
-
-```bash
-php artisan vendor:publish --provider="BushlanovDev\MaxMessengerBot\Laravel\MaxBotServiceProvider"
-```
-
-Для работы вам потребуется внести следующие настройки в `.env`
-
-```env
-MAXBOT_ACCESS_TOKEN=your_bot_access_token_here
-MAXBOT_WEBHOOK_SECRET=your_webhook_secret_here
-MAXBOT_LOGGING_ENABLED=true
 ```
 
 ### Инициализация бота
@@ -443,4 +415,35 @@ $api->answerOnCallback(
     format: null,                      // Формат сообщения Markdown или HTML (необязательно)
     notify: true,                      // Заполните это, если хотите просто отправить одноразовое уведомление пользователю (необязательно)
 );
+```
+
+## Laravel
+
+### Регистрация пакета
+Пакет будет автоматически обнаружен Laravel.  
+Если автоматическое обнаружение отключено можно зарегистрировать сервис провайдер и фасад в `config/app.php`:
+
+```php
+'providers' => [
+    // ...
+    BushlanovDev\MaxMessengerBot\Laravel\MaxBotServiceProvider::class,
+],
+// ...
+'aliases' => [
+    // ...
+    'MaxBot' => BushlanovDev\MaxMessengerBot\Laravel\MaxBotFacade::class,
+],
+```
+### Настройка
+
+При не необходимости опубликовать конфиг выполните следующую команду:
+
+```bash
+php artisan vendor:publish --provider="BushlanovDev\MaxMessengerBot\Laravel\MaxBotServiceProvider"
+```
+
+Для работы вам потребуется добавить ваш токен в файл `.env`
+
+```env
+MAXBOT_ACCESS_TOKEN=your_bot_access_token_here
 ```
