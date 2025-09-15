@@ -42,6 +42,11 @@
 - [Laravel](#Laravel)
     - [Регистрация пакета](#Регистрация-пакета)
     - [Настройка](#Настройка)
+    - [Использование](#Использование)
+    - [Artisan команды](#Artisan-команды)
+        - [Подписка на Webhook](#Подписка-на-Webhook)
+        - [Удаление подписки](#Удаление-подписки)
+        - [Список подписок](#Список-подписок)
 
 ## Быстрый старт
 
@@ -446,4 +451,46 @@ php artisan vendor:publish --provider="BushlanovDev\MaxMessengerBot\Laravel\MaxB
 
 ```env
 MAXBOT_ACCESS_TOKEN=your_bot_access_token_here
+MAXBOT_WEBHOOK_SECRET=your_webhook_secret_here
+```
+
+### Использование
+
+Все методы бота доступны через фасад MaxBot, например:
+
+```php
+use MaxBot;
+
+// Отправка сообщения пользователю
+MaxBot::sendUserMessage(123456, 'Hello from Laravel!');
+
+// Получение обновления
+$updates = MaxBot::getUpdates();
+```
+
+### Artisan команды
+
+#### Подписка на Webhook
+
+```bash
+# Подписка на получение обновлений
+php artisan maxbot:webhook:subscribe https://yourapp.com/bot/webhook
+
+# С верификацией
+php artisan maxbot:webhook:subscribe https://yourapp.com/bot/webhook --secret=your_secret_key
+
+# Подписка только на определенные типы событий
+php artisan maxbot:webhook:subscribe https://yourapp.com/bot/webhook --types=message_created --types=message_callback
+```
+
+#### Удаление подписки
+
+```bash
+php artisan maxbot:webhook:unsubscribe https://yourapp.com/bot/webhook
+```
+
+#### Список подписок
+
+```bash
+php artisan maxbot:webhook:list
 ```
