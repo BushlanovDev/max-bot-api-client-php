@@ -42,6 +42,15 @@
 - [Laravel](#Laravel)
     - [Регистрация пакета](#Регистрация-пакета)
     - [Настройка](#Настройка)
+    - [Использование](#Использование)
+    - [Artisan команды](#Artisan-команды)
+        - [Подписка на Webhook](#Подписка-на-Webhook)
+        - [Удаление подписки](#Удаление-подписки)
+        - [Список подписок](#Список-подписок)
+    - [Обработка хуков](#Обработка-хуков)
+    - [Long Polling](#Long-Polling)
+    - [Handler Classes](#Handler-Classes)
+    - [Тестирование](#Тестирование)
 
 ## Быстрый старт
 
@@ -446,4 +455,162 @@ php artisan vendor:publish --provider="BushlanovDev\MaxMessengerBot\Laravel\MaxB
 
 ```env
 MAXBOT_ACCESS_TOKEN=your_bot_access_token_here
+MAXBOT_WEBHOOK_SECRET=your_webhook_secret_here
+```
+
+### Использование
+
+Все методы бота доступны через фасад MaxBot, например:
+
+```php
+use MaxBot;
+
+// Отправка сообщения пользователю
+MaxBot::sendUserMessage(123456, 'Hello from Laravel!');
+
+// Получение обновления
+$updates = MaxBot::getUpdates();
+```
+
+### Artisan команды
+
+#### Подписка на Webhook
+
+```bash
+# Подписка на получение обновлений
+php artisan maxbot:webhook:subscribe https://yourapp.com/bot/webhook
+
+# С верификацией
+php artisan maxbot:webhook:subscribe https://yourapp.com/bot/webhook --secret=your_secret_key
+
+# Подписка только на определенные типы событий
+php artisan maxbot:webhook:subscribe https://yourapp.com/bot/webhook --types=message_created --types=message_callback
+```
+
+#### Удаление подписки
+
+```bash
+php artisan maxbot:webhook:unsubscribe https://yourapp.com/bot/webhook
+```
+
+#### Список подписок
+
+```bash
+php artisan maxbot:webhook:list
+```
+
+### Обработка хуков
+
+Создайте контроллер для обработчика:
+
+```php
+use Illuminate\Http\Request;
+use BushlanovDev\MaxMessengerBot\Laravel\MaxBotManager;
+
+class WebhookController extends Controller
+{
+    public function handle(Request $request, MaxBotManager $botManager)
+    {
+        // Обработчик сообщений
+        $botManager->onMessageCreated(function (MessageCreatedUpdate $update) {
+            $message = $update->message;
+            // ...
+        });
+
+        // Обработчик команды /start
+        $botManager->onCommand('start', function (MessageCreatedUpdate $update) {
+            // ...
+        });
+
+        // Using Laravel container bindings
+        $botManager->onMessageCreated(MessageHandler::class);
+        $botManager->onCommand('help', HelpCommandHandler::class);
+
+        return $botManager->handleWebhook($request);
+    }
+}
+```
+
+Добавьте маршрут в  `routes/web.php`:
+
+```php
+Route::post('/bot/webhook', [WebhookController::class, 'handle']);
+```
+
+### Long Polling
+
+Создайте artisan команду для получения long polling обновлений:
+
+```php
+use Illuminate\Console\Command;
+use BushlanovDev\MaxMessengerBot\Laravel\MaxBotManager;
+
+class BotPollingCommand extends Command
+{
+    protected $signature = 'bot:polling';
+    
+    protected $description = 'Start bot long polling';
+
+    public function handle(MaxBotManager $botManager)
+    {
+        $this->info('Starting bot polling...');
+        $botManager->startLongPolling();
+    }
+}
+```
+
+### Handler Classes
+
+Примеры классов обработчиков обновлений:
+
+```php
+class MessageHandler
+{
+    public function handle(MessageCreatedUpdate $update)
+    {
+        $message = $update->message;
+        $text = $message->body?->text;
+        
+        if ($text) {
+            app(Api::class)->sendMessage(
+                userId: $message->sender->userId,
+                text: "You said: $text",
+            );
+        }
+    }
+}
+
+class HelpCommandHandler
+{
+    public function handle(MessageCreatedUpdate $update)
+    {
+        app(Api::class)->sendMessage(
+            userId: $update->message->sender->userId,
+            text: "This is help message",
+        );
+    }
+}
+```
+
+### Тестирование
+
+Вы можете использовать мок API для тестирования:
+
+```php
+use BushlanovDev\MaxMessengerBot\Api;
+
+class BotTest extends TestCase
+{
+    public function test_bot_sends_message()
+    {
+        $apiMock = $this->createMock(Api::class);
+        $apiMock->expects($this->once())
+            ->method('sendUserMessage')
+            ->with(123456, 'Hello!');
+
+        $this->app->instance(Api::class, $apiMock);
+
+        // Your test code here
+    }
+}
 ```
