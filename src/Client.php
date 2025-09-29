@@ -60,7 +60,6 @@ final readonly class Client implements ClientApiInterface
      */
     public function request(string $method, string $uri, array $queryParams = [], array $body = []): array
     {
-        $queryParams['access_token'] = $this->accessToken;
         if (!empty($this->apiVersion)) {
             $queryParams['v'] = $this->apiVersion;
         }
@@ -83,7 +82,8 @@ final readonly class Client implements ClientApiInterface
             $stream = $this->streamFactory->createStream($payload);
             $request = $request
                 ->withBody($stream)
-                ->withHeader('Content-Type', 'application/json; charset=utf-8');
+                ->withHeader('Content-Type', 'application/json; charset=utf-8')
+                ->withHeader('Authorization', $this->accessToken);
         }
 
         try {

@@ -35,7 +35,7 @@ final class ClientTest extends TestCase
 {
     private const string FAKE_TOKEN = '12345:abcdef';
     private const string API_VERSION = '0.0.6';
-    private const string API_BASE_URL = 'https://botapi.max.ru';
+    private const string API_BASE_URL = 'https://platform-api.max.ru';
 
     private MockObject&ClientInterface $httpClientMock;
     private MockObject&RequestFactoryInterface $requestFactoryMock;
@@ -96,7 +96,6 @@ final class ClientTest extends TestCase
     {
         $uri = '/me';
         $expectedUrl = self::API_BASE_URL . $uri . '?' . http_build_query([
-                'access_token' => self::FAKE_TOKEN,
                 'v' => self::API_VERSION,
             ]);
         $responsePayload = ['id' => 987, 'name' => 'TestBot'];
@@ -138,8 +137,7 @@ final class ClientTest extends TestCase
         ];
         $responsePayload = ['success' => true];
         $expectedUrl = self::API_BASE_URL . $uri . '?' . http_build_query([
-                'access_token' => self::FAKE_TOKEN,
-                'v' => self::API_VERSION
+                'v' => self::API_VERSION,
             ]);
 
         $this->requestFactoryMock
@@ -157,12 +155,23 @@ final class ClientTest extends TestCase
             }))
             ->willReturn($this->requestMock);
 
+        $headerCallCount = 0;
         $this->requestMock
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('withHeader')
-            ->with('Content-Type', 'application/json; charset=utf-8')
-            ->willReturn($this->requestMock);
+            ->willReturnCallback(function (string $header, string $value) use (&$headerCallCount) {
+                if ($headerCallCount === 0) {
+                    $this->assertSame('Content-Type', $header);
+                    $this->assertSame('application/json; charset=utf-8', $value);
+                } elseif ($headerCallCount === 1) {
+                    $this->assertSame('Authorization', $header);
+                    $this->assertSame(self::FAKE_TOKEN, $value);
+                }
 
+                $headerCallCount++;
+
+                return $this->requestMock;
+            });
         $this->responseMock->method('getStatusCode')->willReturn(200);
         $this->streamMock->method('__toString')->willReturn(json_encode($responsePayload));
 
