@@ -48,11 +48,11 @@ use RuntimeException;
  */
 class Api
 {
-    public const string LIBRARY_VERSION = '1.2.1';
+    public const string LIBRARY_VERSION = '1.3.0';
 
     public const string API_VERSION = '0.0.6';
 
-    private const string API_BASE_URL = 'https://botapi.max.ru';
+    private const string API_BASE_URL = 'https://platform-api.max.ru';
 
     private const string METHOD_GET = 'GET';
     private const string METHOD_POST = 'POST';
