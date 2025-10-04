@@ -71,7 +71,9 @@ final readonly class Client implements ClientApiInterface
         ]);
 
         $fullUrl = $this->baseUrl . $uri . '?' . http_build_query($queryParams);
-        $request = $this->requestFactory->createRequest($method, $fullUrl);
+        $request = $this->requestFactory
+            ->createRequest($method, $fullUrl)
+            ->withHeader('Authorization', $this->accessToken);
 
         if (!empty($body)) {
             try {
@@ -82,8 +84,7 @@ final readonly class Client implements ClientApiInterface
             $stream = $this->streamFactory->createStream($payload);
             $request = $request
                 ->withBody($stream)
-                ->withHeader('Content-Type', 'application/json; charset=utf-8')
-                ->withHeader('Authorization', $this->accessToken);
+                ->withHeader('Content-Type', 'application/json; charset=utf-8');
         }
 
         try {
@@ -143,6 +144,7 @@ final readonly class Client implements ClientApiInterface
         $request = $this->requestFactory
             ->createRequest('POST', $uri)
             ->withHeader('Content-Type', 'multipart/form-data; boundary=' . $boundary)
+            ->withHeader('Authorization', $this->accessToken)
             ->withBody($bodyStream);
 
         try {
@@ -198,7 +200,8 @@ final readonly class Client implements ClientApiInterface
                 ->withBody($chunkStream)
                 ->withHeader('Content-Type', 'application/octet-stream')
                 ->withHeader('Content-Disposition', 'attachment; filename="' . $fileName . '"')
-                ->withHeader('Content-Range', "bytes {$startByte}-{$endByte}/{$fileSize}");
+                ->withHeader('Content-Range', "bytes {$startByte}-{$endByte}/{$fileSize}")
+                ->withHeader('Authorization', $this->accessToken);
 
             try {
                 $response = $this->httpClient->sendRequest($request);
