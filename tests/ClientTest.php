@@ -107,6 +107,12 @@ final class ClientTest extends TestCase
             ->with('GET', $expectedUrl)
             ->willReturn($this->requestMock);
 
+        $this->requestMock
+            ->expects($this->once())
+            ->method('withHeader')
+            ->with('Authorization', self::FAKE_TOKEN)
+            ->willReturn($this->requestMock);
+
         $this->httpClientMock
             ->expects($this->once())
             ->method('sendRequest')
@@ -161,17 +167,18 @@ final class ClientTest extends TestCase
             ->method('withHeader')
             ->willReturnCallback(function (string $header, string $value) use (&$headerCallCount) {
                 if ($headerCallCount === 0) {
-                    $this->assertSame('Content-Type', $header);
-                    $this->assertSame('application/json; charset=utf-8', $value);
-                } elseif ($headerCallCount === 1) {
                     $this->assertSame('Authorization', $header);
                     $this->assertSame(self::FAKE_TOKEN, $value);
+                } elseif ($headerCallCount === 1) {
+                    $this->assertSame('Content-Type', $header);
+                    $this->assertSame('application/json; charset=utf-8', $value);
                 }
 
                 $headerCallCount++;
 
                 return $this->requestMock;
             });
+
         $this->responseMock->method('getStatusCode')->willReturn(200);
         $this->streamMock->method('__toString')->willReturn(json_encode($responsePayload));
 
@@ -307,11 +314,23 @@ final class ClientTest extends TestCase
             )
             ->willReturn($this->requestMock);
 
+        $headerCallCount = 0;
         $this->requestMock
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('withHeader')
-            ->with($this->stringStartsWith('Content-Type'), $this->stringStartsWith('multipart/form-data'))
-            ->willReturn($this->requestMock);
+            ->willReturnCallback(function (string $header, string $value) use (&$headerCallCount) {
+                if ($headerCallCount === 0) {
+                    $this->assertSame('Content-Type', $header);
+                    $this->assertStringStartsWith('multipart/form-data; boundary=', $value);
+                } elseif ($headerCallCount === 1) {
+                    $this->assertSame('Authorization', $header);
+                    $this->assertSame(self::FAKE_TOKEN, $value);
+                }
+
+                $headerCallCount++;
+
+                return $this->requestMock;
+            });
 
         $this->requestFactoryMock
             ->expects($this->once())
@@ -339,9 +358,26 @@ final class ClientTest extends TestCase
         rewind($tmpFileHandle);
 
         $this->requestFactoryMock->method('createRequest')->willReturn($this->requestMock);
-        $this->requestMock->method('withHeader')->willReturn($this->requestMock);
+
+        $headerCallCount = 0;
+        $this->requestMock
+            ->expects($this->exactly(2))
+            ->method('withHeader')
+            ->willReturnCallback(function (string $header, string $value) use (&$headerCallCount) {
+                if ($headerCallCount === 0) {
+                    $this->assertSame('Content-Type', $header);
+                    $this->assertStringStartsWith('multipart/form-data; boundary=', $value);
+                } elseif ($headerCallCount === 1) {
+                    $this->assertSame('Authorization', $header);
+                    $this->assertSame(self::FAKE_TOKEN, $value);
+                }
+
+                $headerCallCount++;
+
+                return $this->requestMock;
+            });
+
         $this->requestMock->method('withBody')->willReturn($this->requestMock);
-//        $this->httpClientMock->method('sendRequest')->willReturn($this->responseMock);
         $this->responseMock->method('getStatusCode')->willReturn(200);
         $this->streamMock->method('__toString')->willReturn(json_encode($responsePayload));
 
@@ -475,7 +511,30 @@ final class ClientTest extends TestCase
 
         $this->requestFactoryMock->method('createRequest')->willReturn($this->requestMock);
         $this->requestMock->method('withBody')->willReturnSelf();
-        $this->requestMock->method('withHeader')->willReturnSelf();
+
+        $headerCallCount = 0;
+        $this->requestMock
+            ->expects($this->exactly(4))
+            ->method('withHeader')
+            ->willReturnCallback(function (string $header, string $value) use (&$headerCallCount, $fileName, $fileSize) {
+                if ($headerCallCount === 0) {
+                    $this->assertSame('Content-Type', $header);
+                    $this->assertSame('application/octet-stream', $value);
+                } elseif ($headerCallCount === 1) {
+                    $this->assertSame('Content-Disposition', $header);
+                    $this->assertSame('attachment; filename="' . $fileName . '"', $value);
+                } elseif ($headerCallCount === 2) {
+                    $this->assertSame('Content-Range', $header);
+                    $this->assertSame("bytes 0-8/{$fileSize}", $value);
+                } elseif ($headerCallCount === 3) {
+                    $this->assertSame('Authorization', $header);
+                    $this->assertSame(self::FAKE_TOKEN, $value);
+                }
+
+                $headerCallCount++;
+
+                return $this->requestMock;
+            });
 
         $this->httpClientMock
             ->expects($this->once())
@@ -495,7 +554,8 @@ final class ClientTest extends TestCase
     #[Test]
     public function resumableUploadSuccessfullyUploadsMultipleChunks(): void
     {
-        $fileContents = str_repeat('A', 3 * 1024 * 1024); // 3 MB
+        $chunkSize = 1024 * 1024;
+        $fileContents = str_repeat('A', 3 * $chunkSize); // 3 MB
         $fileResource = fopen('php://memory', 'w+');
         fwrite($fileResource, $fileContents);
         rewind($fileResource);
@@ -522,7 +582,7 @@ final class ClientTest extends TestCase
             ->method('__toString')
             ->willReturnOnConsecutiveCalls('', '', '<retval>1</retval>');
 
-        $result = $this->client->resumableUpload($uploadUrl, $fileResource, $fileName, $fileSize, 1024 * 1024);
+        $result = $this->client->resumableUpload($uploadUrl, $fileResource, $fileName, $fileSize, $chunkSize);
 
         $this->assertSame('<retval>1</retval>', $result);
         fclose($fileResource);
