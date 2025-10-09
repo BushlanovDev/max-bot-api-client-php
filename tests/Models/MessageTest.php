@@ -64,6 +64,9 @@ final class MessageTest extends TestCase
             'stat' => [
                 'views' => 500,
             ],
+            'chat_id' => null,
+            'recipient_id' => null,
+            'message_id' => null,
         ];
 
         $message = Message::fromArray($data);
