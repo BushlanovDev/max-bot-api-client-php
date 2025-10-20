@@ -221,6 +221,36 @@ final class ModelFactoryTest extends TestCase
     }
 
     #[Test]
+    public function createMessageFromSendResponseCorrectlyTransformsData(): void
+    {
+        $apiResponse = [
+            'message' => [
+                'recipient' => ['chat_id' => 20414985, 'chat_type' => 'dialog', 'user_id' => 4328369],
+                'timestamp' => 1760089962345,
+                'sender' => [
+                    'user_id' => 24480184,
+                    'first_name' => 'Autobot',
+                    'is_bot' => true,
+                    'last_activity_time' => 1760089962354,
+                ],
+                'message' => ['mid' => 'mid.xyz', 'seq' => 1153, 'text' => '123123'],
+            ],
+            'chat_id' => 20414985,
+            'recipient_id' => 4328369,
+            'message_id' => 'mid.xyz',
+        ];
+
+        $message = $this->factory->createMessageFromSendResponse($apiResponse);
+
+        $this->assertInstanceOf(Message::class, $message);
+        $this->assertInstanceOf(MessageBody::class, $message->body);
+        $this->assertSame('mid.xyz', $message->body->mid);
+        $this->assertSame(20414985, $message->chatId);
+        $this->assertSame(4328369, $message->recipientId);
+        $this->assertSame('mid.xyz', $message->messageId);
+    }
+
+    #[Test]
     public function createMessage(): void
     {
         $rawData = [

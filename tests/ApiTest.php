@@ -336,7 +336,7 @@ final class ApiTest extends TestCase
         $apiResponse = [
             'message' => [
                 'timestamp' => time(),
-                'body' => ['mid' => 'mid.456.xyz', 'seq' => 101, 'text' => $text],
+                'message' => ['mid' => 'mid.456.xyz', 'seq' => 101, 'text' => $text],
                 'recipient' => ['chat_type' => 'dialog', 'user_id' => 123, 'chat_id' => null],
                 'sender' => [
                     'user_id' => 123,
@@ -348,9 +348,18 @@ final class ApiTest extends TestCase
                 ],
                 'url' => 'https://max.ru/message/123',
             ],
+            'chat_id' => 20414985,
+            'recipient_id' => 4328369,
+            'message_id' => 'mid.456.xyz',
         ];
 
-        $expectedMessageObject = Message::fromArray($apiResponse['message']);
+        $finalMessageData = $apiResponse['message'];
+        $finalMessageData['body'] = $finalMessageData['message'];
+        unset($finalMessageData['message']);
+        $finalMessageData['chat_id'] = $apiResponse['chat_id'];
+        $finalMessageData['recipient_id'] = $apiResponse['recipient_id'];
+        $finalMessageData['message_id'] = $apiResponse['message_id'];
+        $expectedMessageObject = Message::fromArray($finalMessageData);
 
         $this->clientMock
             ->expects($this->once())
@@ -360,8 +369,8 @@ final class ApiTest extends TestCase
 
         $this->modelFactoryMock
             ->expects($this->once())
-            ->method('createMessage')
-            ->with($apiResponse['message'])
+            ->method('createMessageFromSendResponse')
+            ->with($apiResponse)
             ->willReturn($expectedMessageObject);
 
         $result = $this->api->sendMessage(
@@ -416,12 +425,17 @@ final class ApiTest extends TestCase
         $apiResponse = [
             'message' => [
                 'timestamp' => time(),
-                'body' => ['mid' => 'mid.test.123', 'seq' => 1, 'text' => $text],
+                'message' => ['mid' => 'mid.test.123', 'seq' => 1, 'text' => $text],
                 'recipient' => ['chat_type' => 'dialog', 'user_id' => 123, 'chat_id' => null],
-            ]
+            ],
+            'message_id' => 'mid.test.123',
         ];
 
-        $expectedMessageObject = Message::fromArray($apiResponse['message']);
+        $finalMessageData = $apiResponse['message'];
+        $finalMessageData['body'] = $finalMessageData['message'];
+        unset($finalMessageData['message']);
+        $finalMessageData['message_id'] = $apiResponse['message_id'];
+        $expectedMessageObject = Message::fromArray($finalMessageData);
 
         $this->clientMock
             ->expects($this->once())
@@ -436,8 +450,8 @@ final class ApiTest extends TestCase
 
         $this->modelFactoryMock
             ->expects($this->once())
-            ->method('createMessage')
-            ->with($apiResponse['message'])
+            ->method('createMessageFromSendResponse')
+            ->with($apiResponse)
             ->willReturn($expectedMessageObject);
 
         $result = $this->api->sendMessage(
@@ -803,11 +817,15 @@ final class ApiTest extends TestCase
         $apiResponse = [
             'message' => [
                 'timestamp' => time(),
-                'body' => ['mid' => 'mid.sticker.1', 'seq' => 10],
+                'message' => ['mid' => 'mid.sticker.1', 'seq' => 10],
                 'recipient' => ['chat_type' => 'dialog', 'user_id' => $chatId],
             ]
         ];
-        $expectedMessageObject = Message::fromArray($apiResponse['message']);
+
+        $finalMessageData = $apiResponse['message'];
+        $finalMessageData['body'] = $finalMessageData['message'];
+        unset($finalMessageData['message']);
+        $expectedMessageObject = Message::fromArray($finalMessageData);
 
         $this->clientMock->expects($this->once())
             ->method('request')
@@ -815,8 +833,8 @@ final class ApiTest extends TestCase
             ->willReturn($apiResponse);
 
         $this->modelFactoryMock->expects($this->once())
-            ->method('createMessage')
-            ->with($apiResponse['message'])
+            ->method('createMessageFromSendResponse')
+            ->with($apiResponse)
             ->willReturn($expectedMessageObject);
 
         $result = $this->api->sendMessage(chatId: $chatId, attachments: [$stickerRequest]);
@@ -849,11 +867,14 @@ final class ApiTest extends TestCase
         $apiResponse = [
             'message' => [
                 'timestamp' => time(),
-                'body' => ['mid' => 'mid.contact.1', 'seq' => 11],
+                'message' => ['mid' => 'mid.contact.1', 'seq' => 11],
                 'recipient' => ['chat_type' => 'dialog', 'user_id' => $chatId],
             ]
         ];
-        $expectedMessageObject = Message::fromArray($apiResponse['message']);
+        $finalMessageData = $apiResponse['message'];
+        $finalMessageData['body'] = $finalMessageData['message'];
+        unset($finalMessageData['message']);
+        $expectedMessageObject = Message::fromArray($finalMessageData);
 
         $this->clientMock->expects($this->once())
             ->method('request')
@@ -861,8 +882,8 @@ final class ApiTest extends TestCase
             ->willReturn($apiResponse);
 
         $this->modelFactoryMock->expects($this->once())
-            ->method('createMessage')
-            ->with($apiResponse['message'])
+            ->method('createMessageFromSendResponse')
+            ->with($apiResponse)
             ->willReturn($expectedMessageObject);
 
         $result = $this->api->sendMessage(chatId: $chatId, attachments: [$contactRequest]);
@@ -895,11 +916,14 @@ final class ApiTest extends TestCase
         $apiResponse = [
             'message' => [
                 'timestamp' => time(),
-                'body' => ['mid' => 'mid.location.1', 'seq' => 12],
+                'message' => ['mid' => 'mid.location.1', 'seq' => 12],
                 'recipient' => ['chat_type' => 'dialog', 'user_id' => $chatId],
             ]
         ];
-        $expectedMessageObject = Message::fromArray($apiResponse['message']);
+        $finalMessageData = $apiResponse['message'];
+        $finalMessageData['body'] = $finalMessageData['message'];
+        unset($finalMessageData['message']);
+        $expectedMessageObject = Message::fromArray($finalMessageData);
 
         $this->clientMock->expects($this->once())
             ->method('request')
@@ -907,8 +931,8 @@ final class ApiTest extends TestCase
             ->willReturn($apiResponse);
 
         $this->modelFactoryMock->expects($this->once())
-            ->method('createMessage')
-            ->with($apiResponse['message'])
+            ->method('createMessageFromSendResponse')
+            ->with($apiResponse)
             ->willReturn($expectedMessageObject);
 
         $result = $this->api->sendMessage(chatId: $chatId, attachments: [$locationRequest]);
@@ -940,11 +964,14 @@ final class ApiTest extends TestCase
         $apiResponse = [
             'message' => [
                 'timestamp' => time(),
-                'body' => ['mid' => 'mid.share.1', 'seq' => 13],
+                'message' => ['mid' => 'mid.share.1', 'seq' => 13],
                 'recipient' => ['chat_type' => 'dialog', 'user_id' => $chatId],
             ]
         ];
-        $expectedMessageObject = Message::fromArray($apiResponse['message']);
+        $finalMessageData = $apiResponse['message'];
+        $finalMessageData['body'] = $finalMessageData['message'];
+        unset($finalMessageData['message']);
+        $expectedMessageObject = Message::fromArray($finalMessageData);
 
         $this->clientMock->expects($this->once())
             ->method('request')
@@ -952,8 +979,8 @@ final class ApiTest extends TestCase
             ->willReturn($apiResponse);
 
         $this->modelFactoryMock->expects($this->once())
-            ->method('createMessage')
-            ->with($apiResponse['message'])
+            ->method('createMessageFromSendResponse')
+            ->with($apiResponse)
             ->willReturn($expectedMessageObject);
 
         $result = $this->api->sendMessage(chatId: $chatId, attachments: [$shareRequest]);

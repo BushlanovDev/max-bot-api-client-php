@@ -129,6 +129,33 @@ class ModelFactory
     }
 
     /**
+     * Creates a Message from the specific response structure of the sendMessage endpoint.
+     *
+     * @param array<string, mixed> $data The raw response from the client.
+     *
+     * @return Message
+     * @throws ReflectionException
+     */
+    public function createMessageFromSendResponse(array $data): Message
+    {
+        $messageData = $data['message'];
+
+        $topLevelData = [
+            'chat_id' => $data['chat_id'] ?? null,
+            'recipient_id' => $data['recipient_id'] ?? null,
+            'message_id' => $data['message_id'] ?? null,
+        ];
+        $messageData = array_merge($messageData, array_filter($topLevelData, fn($value) => $value !== null));
+
+        if (isset($messageData['message']) && is_array($messageData['message'])) {
+            $messageData['body'] = $messageData['message'];
+            unset($messageData['message']);
+        }
+
+        return $this->createMessage($messageData);
+    }
+
+    /**
      * Message.
      *
      * @param array<string, mixed> $data
@@ -267,7 +294,9 @@ class ModelFactory
             InlineButtonType::RequestGeoLocation => RequestGeoLocationButton::fromArray($data),
             InlineButtonType::Chat => ChatButton::fromArray($data),
             InlineButtonType::OpenApp => OpenAppButton::fromArray($data),
-            default => throw new LogicException('Unknown or unsupported inline button type: ' . ($data['type'] ?? 'none')),
+            default => throw new LogicException(
+                'Unknown or unsupported inline button type: ' . ($data['type'] ?? 'none')
+            ),
         };
     }
 
