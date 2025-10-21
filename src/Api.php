@@ -363,7 +363,7 @@ class Api
             $this->buildNewMessageBody($text, $attachments, $format, $link, $notify),
         );
 
-        return $this->modelFactory->createMessage($response['message']);
+        return $this->modelFactory->createMessageFromSendResponse($response);
     }
 
     /**

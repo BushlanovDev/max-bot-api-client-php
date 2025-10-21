@@ -17,6 +17,9 @@ final readonly class Message extends AbstractModel
      * @param string|null $url Message public URL. Can be null for dialogs or non-public chats/channels.
      * @param LinkedMessage|null $link Forwarded or replied message.
      * @param MessageStat|null $stat Message statistics. Available only for channels.
+     * @param int|null $chatId Chat identifier.
+     * @param int|null $recipientId User identifier, if message was sent to user.
+     * @param string|null $messageId Unique identifier of message.
      */
     public function __construct(
         public int $timestamp,
@@ -26,6 +29,9 @@ final readonly class Message extends AbstractModel
         public ?string $url,
         public ?LinkedMessage $link,
         public ?MessageStat $stat,
+        public ?int $chatId = null,
+        public ?int $recipientId = null,
+        public ?string $messageId = null,
     ) {
     }
 }
