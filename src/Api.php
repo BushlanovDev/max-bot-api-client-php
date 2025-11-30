@@ -48,9 +48,9 @@ use RuntimeException;
  */
 class Api
 {
-    public const string LIBRARY_VERSION = '1.3.2';
+    public const string LIBRARY_VERSION = '1.3.3';
 
-    public const string API_VERSION = '0.0.6';
+    public const string API_VERSION = '1.2.5';
 
     private const string API_BASE_URL = 'https://platform-api.max.ru';
 
@@ -128,7 +128,7 @@ class Api
                 $httpFactory,
                 $httpFactory,
                 self::API_BASE_URL,
-                self::API_VERSION,
+                null,
                 $this->logger,
             );
         }
