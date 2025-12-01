@@ -67,13 +67,25 @@ use BushlanovDev\MaxMessengerBot\Models\Updates\UserRemovedFromChatUpdate;
 use BushlanovDev\MaxMessengerBot\Models\UploadEndpoint;
 use BushlanovDev\MaxMessengerBot\Models\VideoAttachmentDetails;
 use LogicException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use ReflectionException;
 
 /**
  * Creates DTOs from raw associative arrays returned by the API client.
  */
-class ModelFactory
+readonly class ModelFactory
 {
+    private LoggerInterface $logger;
+
+    /**
+     * @param LoggerInterface|null $logger PSR LoggerInterface.
+     */
+    public function __construct(?LoggerInterface $logger = null)
+    {
+        $this->logger = $logger ?? new NullLogger();
+    }
+
     /**
      * Simple response to request.
      *
@@ -341,7 +353,11 @@ class ModelFactory
         if (isset($data['updates']) && is_array($data['updates'])) {
             foreach ($data['updates'] as $updateData) {
                 // Here we delegate the creation of a specific update to another factory method
-                $updateObjects[] = $this->createUpdate($updateData);
+                try {
+                    $updateObjects[] = $this->createUpdate($updateData);
+                } catch (LogicException $e) {
+                    $this->logger->debug($e->getMessage(), ['payload' => $updateData, 'exception' => $e]);
+                }
             }
         }
 
