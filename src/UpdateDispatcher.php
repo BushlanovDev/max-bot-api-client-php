@@ -165,6 +165,19 @@ final class UpdateDispatcher
     }
 
     /**
+     * A convenient alias for addHandler(UpdateType::DialogMuted, $handler).
+     *
+     * @param callable(Models\Updates\BotRemovedFromChatUpdate, Api): void $handler
+     *
+     * @return $this
+     * @codeCoverageIgnore
+     */
+    public function onDialogMuted(callable $handler): self
+    {
+        return $this->addHandler(UpdateType::DialogMuted, $handler);
+    }
+
+    /**
      * A convenient alias for addHandler(UpdateType::UserAdded, $handler).
      *
      * @param callable(Models\Updates\UserAddedToChatUpdate, Api): void $handler
@@ -201,6 +214,19 @@ final class UpdateDispatcher
     public function onBotStarted(callable $handler): self
     {
         return $this->addHandler(UpdateType::BotStarted, $handler);
+    }
+
+    /**
+     * A convenient alias for addHandler(UpdateType::BotStopped, $handler).
+     *
+     * @param callable(Models\Updates\BotStartedUpdate, Api): void $handler
+     *
+     * @return $this
+     * @codeCoverageIgnore
+     */
+    public function onBotStopped(callable $handler): self
+    {
+        return $this->addHandler(UpdateType::BotStopped, $handler);
     }
 
     /**

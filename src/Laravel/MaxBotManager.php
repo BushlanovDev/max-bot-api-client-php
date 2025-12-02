@@ -230,6 +230,19 @@ class MaxBotManager
     }
 
     /**
+     * Register a dialog mute handler.
+     *
+     * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
+     *
+     * @throws BindingResolutionException
+     * @codeCoverageIgnore
+     */
+    public function onDialogMuted(callable|string $handler): void
+    {
+        $this->dispatcher->onDialogMuted($this->resolveHandler($handler));
+    }
+
+    /**
      * Register a user added handler.
      *
      * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
@@ -266,6 +279,19 @@ class MaxBotManager
     public function onBotStarted(callable|string $handler): void
     {
         $this->dispatcher->onBotStarted($this->resolveHandler($handler));
+    }
+
+    /**
+     * Register a bot stopped handler.
+     *
+     * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
+     *
+     * @throws BindingResolutionException
+     * @codeCoverageIgnore
+     */
+    public function onBotStopped(callable|string $handler): void
+    {
+        $this->dispatcher->onBotStopped($this->resolveHandler($handler));
     }
 
     /**

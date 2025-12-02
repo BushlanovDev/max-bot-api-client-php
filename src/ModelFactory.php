@@ -56,7 +56,9 @@ use BushlanovDev\MaxMessengerBot\Models\Updates\AbstractUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\BotAddedToChatUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\BotRemovedFromChatUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\BotStartedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\BotStoppedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\ChatTitleChangedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\DialogMutedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\MessageCallbackUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\MessageChatCreatedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\MessageCreatedUpdate;
@@ -385,9 +387,11 @@ readonly class ModelFactory
             UpdateType::MessageRemoved => MessageRemovedUpdate::fromArray($data),
             UpdateType::BotAdded => BotAddedToChatUpdate::fromArray($data),
             UpdateType::BotRemoved => BotRemovedFromChatUpdate::fromArray($data),
+            UpdateType::DialogMuted => DialogMutedUpdate::fromArray($data),
             UpdateType::UserAdded => UserAddedToChatUpdate::fromArray($data),
             UpdateType::UserRemoved => UserRemovedFromChatUpdate::fromArray($data),
             UpdateType::BotStarted => BotStartedUpdate::fromArray($data),
+            UpdateType::BotStopped => BotStoppedUpdate::fromArray($data),
             UpdateType::ChatTitleChanged => ChatTitleChangedUpdate::fromArray($data),
             UpdateType::MessageChatCreated => MessageChatCreatedUpdate::fromArray($data),
             default => throw new LogicException(
