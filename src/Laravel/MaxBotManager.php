@@ -27,7 +27,7 @@ use Throwable;
  * Provides convenient methods for integrating Max Bot with Laravel applications.
  * Handles webhook processing, long polling, and event dispatching within Laravel context.
  */
-class MaxBotManager
+readonly class MaxBotManager
 {
     /**
      * @param Container $container
@@ -35,9 +35,9 @@ class MaxBotManager
      * @param UpdateDispatcher $dispatcher
      */
     public function __construct(
-        private readonly Container $container,
-        private readonly Api $api,
-        private readonly UpdateDispatcher $dispatcher,
+        private Container $container,
+        private Api $api,
+        private UpdateDispatcher $dispatcher,
     ) {
     }
 
@@ -240,6 +240,45 @@ class MaxBotManager
     public function onDialogMuted(callable|string $handler): void
     {
         $this->dispatcher->onDialogMuted($this->resolveHandler($handler));
+    }
+
+    /**
+     * Register a dialog unmute handler.
+     *
+     * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
+     *
+     * @throws BindingResolutionException
+     * @codeCoverageIgnore
+     */
+    public function onDialogUnmuted(callable|string $handler): void
+    {
+        $this->dispatcher->onDialogUnmuted($this->resolveHandler($handler));
+    }
+
+    /**
+     * Register a dialog cleared handler.
+     *
+     * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
+     *
+     * @throws BindingResolutionException
+     * @codeCoverageIgnore
+     */
+    public function onDialogCleared(callable|string $handler): void
+    {
+        $this->dispatcher->onDialogCleared($this->resolveHandler($handler));
+    }
+
+    /**
+     * Register a dialog removed handler.
+     *
+     * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
+     *
+     * @throws BindingResolutionException
+     * @codeCoverageIgnore
+     */
+    public function onDialogRemoved(callable|string $handler): void
+    {
+        $this->dispatcher->onDialogRemoved($this->resolveHandler($handler));
     }
 
     /**

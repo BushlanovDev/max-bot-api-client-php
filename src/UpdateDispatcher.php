@@ -167,7 +167,7 @@ final class UpdateDispatcher
     /**
      * A convenient alias for addHandler(UpdateType::DialogMuted, $handler).
      *
-     * @param callable(Models\Updates\BotRemovedFromChatUpdate, Api): void $handler
+     * @param callable(Models\Updates\DialogMutedUpdate, Api): void $handler
      *
      * @return $this
      * @codeCoverageIgnore
@@ -175,6 +175,45 @@ final class UpdateDispatcher
     public function onDialogMuted(callable $handler): self
     {
         return $this->addHandler(UpdateType::DialogMuted, $handler);
+    }
+
+    /**
+     * A convenient alias for addHandler(UpdateType::DialogUnmuted, $handler).
+     *
+     * @param callable(Models\Updates\DialogUnmutedUpdate, Api): void $handler
+     *
+     * @return $this
+     * @codeCoverageIgnore
+     */
+    public function onDialogUnmuted(callable $handler): self
+    {
+        return $this->addHandler(UpdateType::DialogUnmuted, $handler);
+    }
+
+    /**
+     * A convenient alias for addHandler(UpdateType::DialogCleared, $handler).
+     *
+     * @param callable(Models\Updates\DialogClearedUpdate, Api): void $handler
+     *
+     * @return $this
+     * @codeCoverageIgnore
+     */
+    public function onDialogCleared(callable $handler): self
+    {
+        return $this->addHandler(UpdateType::DialogCleared, $handler);
+    }
+
+    /**
+     * A convenient alias for addHandler(UpdateType::DialogRemoved, $handler).
+     *
+     * @param callable(Models\Updates\DialogRemovedUpdate, Api): void $handler
+     *
+     * @return $this
+     * @codeCoverageIgnore
+     */
+    public function onDialogRemoved(callable $handler): self
+    {
+        return $this->addHandler(UpdateType::DialogRemoved, $handler);
     }
 
     /**
@@ -219,7 +258,7 @@ final class UpdateDispatcher
     /**
      * A convenient alias for addHandler(UpdateType::BotStopped, $handler).
      *
-     * @param callable(Models\Updates\BotStartedUpdate, Api): void $handler
+     * @param callable(Models\Updates\BotStoppedUpdate, Api): void $handler
      *
      * @return $this
      * @codeCoverageIgnore
