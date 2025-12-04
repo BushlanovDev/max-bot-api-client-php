@@ -118,6 +118,7 @@ use RuntimeException;
 #[UsesClass(VideoAttachmentDetails::class)]
 #[UsesClass(VideoUrls::class)]
 #[UsesClass(UpdateDispatcher::class)]
+#[UsesClass(ModelFactory::class)]
 final class ApiTest extends TestCase
 {
     use PHPMock;

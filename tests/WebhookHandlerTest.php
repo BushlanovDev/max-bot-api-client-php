@@ -185,4 +185,43 @@ final class WebhookHandlerTest extends TestCase
         $handler = new WebhookHandler($this->dispatcher, $this->modelFactoryMock, $this->loggerMock, null);
         $handler->handle(null);
     }
+
+    #[Test]
+    public function handleCatchesAndLogsLogicExceptionFromModelFactory(): void
+    {
+        $payload = '{"update_type":"unknown_type","timestamp":123}';
+        $updateData = json_decode($payload, true);
+        $exception = new LogicException('Unknown or unsupported update type received: unknown_type');
+
+        $request = $this->createMockRequest($payload, self::SECRET);
+
+        $this->modelFactoryMock->expects($this->once())
+            ->method('createUpdate')
+            ->with($updateData)
+            ->willThrowException($exception);
+
+        $callIndex = 0;
+        $this->loggerMock->expects($this->exactly(2))
+            ->method('debug')
+            ->willReturnCallback(
+                function (string $message, array $context = []) use (&$callIndex, $payload, $exception) {
+                    if ($callIndex === 0) {
+                        $this->assertSame('Received webhook payload', $message);
+                        $this->assertArrayHasKey('body', $context);
+                        $this->assertSame($payload, $context['body']);
+                    } elseif ($callIndex === 1) {
+                        $this->assertSame('Unknown or unsupported update type received: unknown_type', $message);
+                        $this->assertArrayHasKey('payload', $context);
+                        $this->assertArrayHasKey('exception', $context);
+                        $this->assertSame($payload, $context['payload']);
+                        $this->assertSame($exception, $context['exception']);
+                    }
+                    $callIndex++;
+                }
+            );
+
+        $handler = new WebhookHandler($this->dispatcher, $this->modelFactoryMock, $this->loggerMock, self::SECRET);
+
+        $handler->handle($request);
+    }
 }

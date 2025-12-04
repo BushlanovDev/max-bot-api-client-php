@@ -134,7 +134,7 @@ class Api
         }
 
         $this->client = $client;
-        $this->modelFactory = $modelFactory ?? new ModelFactory();
+        $this->modelFactory = $modelFactory ?? new ModelFactory($this->logger);
         $this->updateDispatcher = new UpdateDispatcher($this);
     }
 
@@ -684,7 +684,6 @@ class Api
         if (!isset($response['message']) || empty($response['message'])) {
             return null;
         }
-
 
         return $this->modelFactory->createMessage($response['message']);
     }

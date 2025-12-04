@@ -82,8 +82,14 @@ class MaxBotServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->singleton(ModelFactory::class, function () {
-            return new ModelFactory();
+        $this->app->singleton(ModelFactory::class, function (Application $app) {
+            /** @var Config $config */
+            $config = $app->make(Config::class);
+            $logger = $config->get('maxbot.logging.enabled', false)
+                ? $app->make(LoggerInterface::class)
+                : new NullLogger();
+
+            return new ModelFactory($logger);
         });
 
         $this->app->singleton(Api::class, function (Application $app) {
@@ -97,11 +103,15 @@ class MaxBotServiceProvider extends ServiceProvider
                 );
             }
 
+            $logger = $config->get('maxbot.logging.enabled', false)
+                ? $app->make(LoggerInterface::class)
+                : new NullLogger();
+
             return new Api(
                 $accessToken,
                 $app->make(ClientApiInterface::class),
                 $app->make(ModelFactory::class),
-                $app->make(LoggerInterface::class),
+                $logger,
             );
         });
 
@@ -114,19 +124,30 @@ class MaxBotServiceProvider extends ServiceProvider
             $config = $app->make(Config::class);
             $secret = $config->get('maxbot.webhook_secret');
 
+            $logger = $config->get('maxbot.logging.enabled', false)
+                ? $app->make(LoggerInterface::class)
+                : new NullLogger();
+
             return new WebhookHandler(
                 $app->make(UpdateDispatcher::class),
                 $app->make(ModelFactory::class),
-                $app->make(LoggerInterface::class),
+                $logger,
                 $secret,
             );
         });
 
         $this->app->bind(LongPollingHandler::class, function (Application $app) {
+            /** @var Config $config */
+            $config = $app->make(Config::class);
+
+            $logger = $config->get('maxbot.logging.enabled', false)
+                ? $app->make(LoggerInterface::class)
+                : new NullLogger();
+
             return new LongPollingHandler(
                 $app->make(Api::class),
                 $app->make(UpdateDispatcher::class),
-                $app->make(LoggerInterface::class),
+                $logger,
             );
         });
 

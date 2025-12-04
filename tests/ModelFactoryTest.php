@@ -59,6 +59,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 #[CoversClass(ModelFactory::class)]
 #[UsesClass(BotInfo::class)]
@@ -817,5 +818,56 @@ final class ModelFactoryTest extends TestCase
         $this->assertInstanceOf($expectedClass, $attachment);
 
         $assertionCallback($this, $attachment);
+    }
+
+    #[Test]
+    public function createUpdateListCatchesAndLogsLogicException(): void
+    {
+        $loggerMock = $this->createMock(LoggerInterface::class);
+        $factory = $this->getMockBuilder(ModelFactory::class)
+            ->setConstructorArgs([$loggerMock])
+            ->onlyMethods(['createUpdate'])
+            ->getMock();
+
+        $validUpdateData = [
+            'update_type' => 'bot_started',
+            'timestamp' => 2,
+            'chat_id' => 123,
+            'user' => [
+                'user_id' => 123,
+                'first_name' => 'John',
+                'is_bot' => false,
+                'last_activity_time' => 2,
+            ],
+            'payload' => 'start_payload',
+            'user_locale' => 'ru-RU',
+        ];
+        $invalidUpdateData = ['update_type' => 'unknown_type'];
+        $rawData = [
+            'updates' => [$validUpdateData, $invalidUpdateData],
+            'marker' => 123,
+        ];
+
+        $exception = new LogicException('Unknown or unsupported update type received: unknown_type');
+        $factory->expects($this->exactly(2))
+            ->method('createUpdate')
+            ->willReturnCallback(function ($data) use ($validUpdateData, $invalidUpdateData, $exception) {
+                if ($data === $validUpdateData) {
+                    return BotStartedUpdate::fromArray($data);
+                }
+                if ($data === $invalidUpdateData) {
+                    throw $exception;
+                }
+                return null;
+            });
+
+        $loggerMock->expects($this->once())
+            ->method('debug')
+            ->with($exception->getMessage(), ['payload' => $invalidUpdateData, 'exception' => $exception]);
+
+        $updateList = $factory->createUpdateList($rawData);
+
+        $this->assertCount(1, $updateList->updates);
+        $this->assertInstanceOf(BotStartedUpdate::class, $updateList->updates[0]);
     }
 }

@@ -69,9 +69,12 @@ final readonly class WebhookHandler
             throw new SerializationException('Failed to decode webhook body as JSON.', 0, $e);
         }
 
-        $update = $this->modelFactory->createUpdate($data);
-
-        $this->dispatcher->dispatch($update);
+        try {
+            $update = $this->modelFactory->createUpdate($data);
+            $this->dispatcher->dispatch($update);
+        } catch (\LogicException $e) {
+            $this->logger->debug($e->getMessage(), ['payload' => $payload, 'exception' => $e]);
+        }
 
         if (!headers_sent()) {
             http_response_code(200);

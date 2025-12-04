@@ -38,6 +38,7 @@ use ReflectionClass;
 #[UsesClass(UpdateDispatcher::class)]
 #[UsesClass(MaxBotManager::class)]
 #[UsesClass(WebhookHandler::class)]
+#[UsesClass(ModelFactory::class)]
 final class MaxBotServiceProviderTest extends TestCase
 {
     use PHPMock;
@@ -213,6 +214,105 @@ final class MaxBotServiceProviderTest extends TestCase
     }
 
     #[Test]
+    public function modelFactoryIsConfiguredWithApplicationLoggerWhenLoggingIsEnabled(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', true);
+
+        $mockLogger = $this->createMock(LoggerInterface::class);
+        $this->app->instance(LoggerInterface::class, $mockLogger);
+
+        /** @var ModelFactory $factory */
+        $factory = $this->app->make(ModelFactory::class);
+
+        $reflection = new ReflectionClass($factory);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($factory);
+
+        $this->assertSame($mockLogger, $actualLogger);
+    }
+
+    #[Test]
+    public function modelFactoryIsConfiguredWithNullLoggerWhenLoggingIsDisabled(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', false);
+
+        /** @var ModelFactory $factory */
+        $factory = $this->app->make(ModelFactory::class);
+
+        $reflection = new ReflectionClass($factory);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($factory);
+
+        $this->assertInstanceOf(NullLogger::class, $actualLogger);
+    }
+
+    #[Test]
+    public function webhookHandlerIsConfiguredWithApplicationLoggerWhenLoggingIsEnabled(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', true);
+
+        $mockLogger = $this->createMock(LoggerInterface::class);
+        $this->app->instance(LoggerInterface::class, $mockLogger);
+
+        /** @var WebhookHandler $handler */
+        $handler = $this->app->make(WebhookHandler::class);
+
+        $reflection = new ReflectionClass($handler);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($handler);
+
+        $this->assertSame($mockLogger, $actualLogger);
+    }
+
+    #[Test]
+    public function webhookHandlerIsConfiguredWithNullLoggerWhenLoggingIsDisabled(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', false);
+
+        /** @var WebhookHandler $handler */
+        $handler = $this->app->make(WebhookHandler::class);
+
+        $reflection = new ReflectionClass($handler);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($handler);
+
+        $this->assertInstanceOf(NullLogger::class, $actualLogger);
+    }
+
+    #[Test]
+    public function longPollingHandlerIsConfiguredWithApplicationLoggerWhenLoggingIsEnabled(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', true);
+
+        $mockLogger = $this->createMock(LoggerInterface::class);
+        $this->app->instance(LoggerInterface::class, $mockLogger);
+
+        /** @var LongPollingHandler $handler */
+        $handler = $this->app->make(LongPollingHandler::class);
+
+        $reflection = new ReflectionClass($handler);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($handler);
+
+        $this->assertSame($mockLogger, $actualLogger);
+    }
+
+    #[Test]
+    public function longPollingHandlerIsConfiguredWithNullLoggerWhenLoggingIsDisabled(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', false);
+
+        /** @var LongPollingHandler $handler */
+        $handler = $this->app->make(LongPollingHandler::class);
+
+        $reflection = new ReflectionClass($handler);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($handler);
+
+        $this->assertInstanceOf(NullLogger::class, $actualLogger);
+    }
+
+    #[Test]
     public function webhookHandlerIsConfiguredWithSecretFromConfig(): void
     {
         /** @var WebhookHandler $handler */
@@ -240,8 +340,26 @@ final class MaxBotServiceProviderTest extends TestCase
 
         $this->assertSame($this->app->make(ClientApiInterface::class), $clientProp->getValue($api));
         $this->assertSame($this->app->make(ModelFactory::class), $factoryProp->getValue($api));
-        $this->assertSame($this->app->make(LoggerInterface::class), $loggerProp->getValue($api));
+        $this->assertInstanceOf(NullLogger::class, $loggerProp->getValue($api));
         $this->assertSame($this->app->make(UpdateDispatcher::class), $dispatcherProp->getValue($api));
+    }
+
+    #[Test]
+    public function apiIsConfiguredWithApplicationLoggerWhenLoggingIsEnabled(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', true);
+
+        $mockLogger = $this->createMock(LoggerInterface::class);
+        $this->app->instance(LoggerInterface::class, $mockLogger);
+
+        /** @var Api $api */
+        $api = $this->app->make(Api::class);
+
+        $reflection = new ReflectionClass($api);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($api);
+
+        $this->assertSame($mockLogger, $actualLogger);
     }
 
     /**
