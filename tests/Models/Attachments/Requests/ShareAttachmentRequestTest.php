@@ -9,7 +9,6 @@ use BushlanovDev\MaxMessengerBot\Models\Attachments\Payloads\ShareAttachmentRequ
 use BushlanovDev\MaxMessengerBot\Models\Attachments\Requests\ShareAttachmentRequest;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -42,21 +41,11 @@ final class ShareAttachmentRequestTest extends TestCase
         $this->assertEquals($expected, $request->toArray());
     }
 
-    /** @return array<string, array{0: ?string, 1: ?string}> */
-    public static function invalidPayloadProvider(): array
-    {
-        return [
-            'both null' => [null, null],
-            'both set' => ['https://a.com', 'token123'],
-        ];
-    }
-
     #[Test]
-    #[DataProvider('invalidPayloadProvider')]
-    public function payloadThrowsExceptionForInvalidArguments(?string $url, ?string $token): void
+    public function payloadThrowsExceptionForInvalidArguments(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Provide exactly one of "url" or "token" for ShareAttachmentRequestPayload.');
-        new ShareAttachmentRequestPayload($url, $token);
+        $this->expectExceptionMessage('Provide one of "url" or "token" for ShareAttachmentRequestPayload.');
+        new ShareAttachmentRequestPayload(null, null);
     }
 }

@@ -23,9 +23,9 @@ final readonly class PhotoAttachmentRequestPayload extends AbstractAttachmentReq
         #[ArrayOf(PhotoToken::class)]
         public ?array $photos = null,
     ) {
-        if (count(array_filter([$this->url, $this->token, $this->photos])) !== 1) {
+        if ($this->url === null && $this->token === null && $this->photos === null) {
             throw new InvalidArgumentException(
-                'Provide exactly one of "url", "token", or "photos" for PhotoAttachmentRequestPayload.'
+                'Provide one of "url", "token", or "photos" for PhotoAttachmentRequestPayload.'
             );
         }
     }

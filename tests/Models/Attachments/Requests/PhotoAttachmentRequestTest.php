@@ -98,29 +98,12 @@ final class PhotoAttachmentRequestTest extends TestCase
         $this->assertEquals($expectedArray, $request->toArray());
     }
 
-    /**
-     * @return array<string, array{0: string|null, 1: string|null, 2: array|null}>
-     */
-    public static function invalidPayloadProvider(): array
-    {
-        return [
-            'no arguments' => [null, null, null],
-            'url and token' => ['http://a.com', 'token123', null],
-            'token and photos' => [null, 'token123', [new PhotoToken('t')]],
-            'all arguments' => ['http://a.com', 'token123', [new PhotoToken('t')]],
-        ];
-    }
-
     #[Test]
-    #[DataProvider('invalidPayloadProvider')]
-    public function payloadThrowsExceptionWhenNotExactlyOneArgumentIsProvided(
-        ?string $url,
-        ?string $token,
-        ?array $photos
-    ): void {
+    public function payloadThrowsExceptionWhenNotExactlyOneArgumentIsProvided(): void
+    {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Provide exactly one of "url", "token", or "photos" for PhotoAttachmentRequestPayload.');
+        $this->expectExceptionMessage('Provide one of "url", "token", or "photos" for PhotoAttachmentRequestPayload.');
 
-        new PhotoAttachmentRequestPayload($url, $token, $photos);
+        new PhotoAttachmentRequestPayload(null, null, null);
     }
 }

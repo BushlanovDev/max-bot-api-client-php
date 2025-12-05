@@ -19,9 +19,9 @@ final readonly class ShareAttachmentRequestPayload extends AbstractAttachmentReq
         public ?string $url = null,
         public ?string $token = null,
     ) {
-        if (count(array_filter([$this->url, $this->token])) !== 1) {
+        if ($this->url === null && $this->token === null) {
             throw new InvalidArgumentException(
-                'Provide exactly one of "url" or "token" for ShareAttachmentRequestPayload.'
+                'Provide one of "url" or "token" for ShareAttachmentRequestPayload.'
             );
         }
     }

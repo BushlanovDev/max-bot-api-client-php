@@ -38,24 +38,12 @@ final class ShareAttachmentRequestPayloadTest extends TestCase
         $this->assertEquals($expectedArray, $payload->toArray());
     }
 
-    /**
-     * @return array<string, array{0: ?string, 1: ?string}>
-     */
-    public static function invalidPayloadProvider(): array
-    {
-        return [
-            'both null' => [null, null],
-            'both set' => ['https://a.com', 'token123'],
-        ];
-    }
-
     #[Test]
-    #[DataProvider('invalidPayloadProvider')]
-    public function constructorThrowsExceptionForInvalidArguments(?string $url, ?string $token): void
+    public function constructorThrowsExceptionForInvalidArguments(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Provide exactly one of "url" or "token" for ShareAttachmentRequestPayload.');
+        $this->expectExceptionMessage('Provide one of "url" or "token" for ShareAttachmentRequestPayload.');
 
-        new ShareAttachmentRequestPayload($url, $token);
+        new ShareAttachmentRequestPayload(null, null);
     }
 }
