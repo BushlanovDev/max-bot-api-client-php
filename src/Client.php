@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BushlanovDev\MaxMessengerBot;
 
+use BushlanovDev\MaxMessengerBot\Exceptions\AttachmentNotReadyException;
 use BushlanovDev\MaxMessengerBot\Exceptions\ForbiddenException;
 use BushlanovDev\MaxMessengerBot\Exceptions\ClientApiException;
 use BushlanovDev\MaxMessengerBot\Exceptions\MethodNotAllowedException;
@@ -252,7 +253,27 @@ final readonly class Client implements ClientApiInterface
             404 => new NotFoundException($errorMessage, $errorCode, $response),
             405 => new MethodNotAllowedException($errorMessage, $errorCode, $response),
             429 => new RateLimitExceededException($errorMessage, $errorCode, $response),
-            default => new ClientApiException($errorMessage, $errorCode, $response, $statusCode),
+            default => $this->mapErrorCodeToException($errorMessage, $errorCode, $response, $statusCode),
+        };
+    }
+
+    /**
+     * @param string $message
+     * @param string $errorCode
+     * @param ResponseInterface $response
+     * @param int|null $httpStatusCode
+     *
+     * @return ClientApiException
+     */
+    private function mapErrorCodeToException(
+        string $message,
+        string $errorCode,
+        ResponseInterface $response,
+        ?int $httpStatusCode = null,
+    ): ClientApiException {
+        return match ($errorCode) {
+            'attachment.not.ready' => new AttachmentNotReadyException($message, $errorCode, $response, $httpStatusCode),
+            default => new ClientApiException($message, $errorCode, $response, $httpStatusCode),
         };
     }
 }

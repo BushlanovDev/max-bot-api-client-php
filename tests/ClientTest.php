@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BushlanovDev\MaxMessengerBot\Tests;
 
 use BushlanovDev\MaxMessengerBot\Client;
+use BushlanovDev\MaxMessengerBot\Exceptions\AttachmentNotReadyException;
 use BushlanovDev\MaxMessengerBot\Exceptions\ClientApiException;
 use BushlanovDev\MaxMessengerBot\Exceptions\ForbiddenException;
 use BushlanovDev\MaxMessengerBot\Exceptions\MethodNotAllowedException;
@@ -242,6 +243,12 @@ final class ClientTest extends TestCase
     public static function apiErrorProvider(): array
     {
         return [
+            '400 Attachment Not Ready' => [
+                400,
+                AttachmentNotReadyException::class,
+                'attachment.not.ready',
+                'Key: errors.process.attachment.file.not.processed',
+            ],
             '400 Bad Request' => [400, ClientApiException::class, 'bad.request', 'Invalid parameters'],
             '401 Unauthorized' => [401, UnauthorizedException::class, 'verify.token', 'Invalid access_token'],
             '403 Forbidden' => [403, ForbiddenException::class, 'access.denied', 'You don\'t have permissions'],

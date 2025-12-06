@@ -44,12 +44,7 @@ jobs:
           coverage: xdebug
 
       - name: Install composer dependencies
-        run: |
-          if [[ "${{ matrix.php-versions }}" == "8.5" ]]; then
-            composer install --prefer-dist --no-interaction --ignore-platform-req=php
-          else
-            composer install --prefer-dist --no-interaction
-          fi
+        run: composer install --prefer-dist --no-interaction
 
       - name: PHPUnit
         run: ./vendor/bin/phpunit --configuration=phpunit.xml --coverage-text
