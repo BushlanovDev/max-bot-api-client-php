@@ -445,7 +445,7 @@ $api->answerOnCallback(
 ```
 ### Настройка
 
-При не необходимости опубликовать конфиг выполните следующую команду:
+При необходимости опубликовать конфиг выполните следующую команду:
 
 ```bash
 php artisan vendor:publish --provider="BushlanovDev\MaxMessengerBot\Laravel\MaxBotServiceProvider"
