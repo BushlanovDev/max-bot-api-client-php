@@ -10,6 +10,7 @@ use BushlanovDev\MaxMessengerBot\Laravel\Commands\WebhookSubscribeCommand;
 use BushlanovDev\MaxMessengerBot\Models\Result;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Support\Facades\Log;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -18,6 +19,7 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[CoversClass(WebhookSubscribeCommand::class)]
+#[AllowMockObjectsWithoutExpectations]
 #[UsesClass(Api::class)]
 #[UsesClass(Result::class)]
 final class WebhookSubscribeCommandTest extends TestCase

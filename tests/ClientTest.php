@@ -16,6 +16,7 @@ use BushlanovDev\MaxMessengerBot\Exceptions\SerializationException;
 use BushlanovDev\MaxMessengerBot\Exceptions\UnauthorizedException;
 use GuzzleHttp\Psr7\HttpFactory;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +33,7 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(Client::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class ClientTest extends TestCase
 {
     private const string FAKE_TOKEN = '12345:abcdef';

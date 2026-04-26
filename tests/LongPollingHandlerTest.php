@@ -16,6 +16,7 @@ use BushlanovDev\MaxMessengerBot\UpdateDispatcher;
 use Error;
 use Exception;
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(LongPollingHandler::class)]
+#[AllowMockObjectsWithoutExpectations]
 #[UsesClass(UpdateDispatcher::class)]
 #[UsesClass(UpdateList::class)]
 #[UsesClass(AbstractUpdate::class)]

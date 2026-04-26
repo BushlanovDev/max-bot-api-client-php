@@ -9,6 +9,7 @@ use BushlanovDev\MaxMessengerBot\Enums\UpdateType;
 use BushlanovDev\MaxMessengerBot\Laravel\Commands\WebhookListCommand;
 use BushlanovDev\MaxMessengerBot\Models\Subscription;
 use Illuminate\Support\Facades\Log;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -17,6 +18,7 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[CoversClass(WebhookListCommand::class)]
+#[AllowMockObjectsWithoutExpectations]
 #[UsesClass(Api::class)]
 #[UsesClass(Subscription::class)]
 final class WebhookListCommandTest extends TestCase

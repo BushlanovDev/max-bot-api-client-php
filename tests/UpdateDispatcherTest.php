@@ -14,12 +14,14 @@ use BushlanovDev\MaxMessengerBot\Models\Updates\BotStartedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\MessageCreatedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\UserWithPhoto;
 use BushlanovDev\MaxMessengerBot\UpdateDispatcher;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(UpdateDispatcher::class)]
+#[AllowMockObjectsWithoutExpectations]
 #[UsesClass(UserWithPhoto::class)]
 #[UsesClass(BotStartedUpdate::class)]
 #[UsesClass(Message::class)]

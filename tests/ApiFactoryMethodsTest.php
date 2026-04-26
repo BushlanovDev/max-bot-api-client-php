@@ -10,6 +10,7 @@ use BushlanovDev\MaxMessengerBot\LongPollingHandler;
 use BushlanovDev\MaxMessengerBot\ModelFactory;
 use BushlanovDev\MaxMessengerBot\UpdateDispatcher;
 use BushlanovDev\MaxMessengerBot\WebhookHandler;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -19,6 +20,7 @@ use Psr\Log\LoggerInterface;
 use ReflectionClass;
 
 #[CoversClass(Api::class)]
+#[AllowMockObjectsWithoutExpectations]
 #[UsesClass(UpdateDispatcher::class)]
 #[UsesClass(WebhookHandler::class)]
 #[UsesClass(LongPollingHandler::class)]

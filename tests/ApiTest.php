@@ -62,6 +62,7 @@ use InvalidArgumentException;
 use LogicException;
 use org\bovigo\vfs\vfsStream;
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -75,6 +76,7 @@ use ReflectionClass;
 use RuntimeException;
 
 #[CoversClass(Api::class)]
+#[AllowMockObjectsWithoutExpectations]
 #[UsesClass(Result::class)]
 #[UsesClass(Client::class)]
 #[UsesClass(BotInfo::class)]

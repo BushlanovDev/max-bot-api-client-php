@@ -19,6 +19,7 @@ use BushlanovDev\MaxMessengerBot\UpdateDispatcher;
 use BushlanovDev\MaxMessengerBot\WebhookHandler;
 use LogicException;
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
@@ -32,6 +33,7 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(WebhookHandler::class)]
+#[AllowMockObjectsWithoutExpectations]
 #[UsesClass(UpdateDispatcher::class)]
 #[UsesClass(Message::class)]
 #[UsesClass(MessageBody::class)]

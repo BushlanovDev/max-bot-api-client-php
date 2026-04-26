@@ -22,6 +22,7 @@ use InvalidArgumentException;
 use LogicException;
 use Orchestra\Testbench\TestCase;
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
@@ -33,6 +34,7 @@ use Psr\Log\NullLogger;
 use ReflectionClass;
 
 #[CoversClass(MaxBotServiceProvider::class)]
+#[AllowMockObjectsWithoutExpectations]
 #[UsesClass(Api::class)]
 #[UsesClass(Client::class)]
 #[UsesClass(UpdateDispatcher::class)]

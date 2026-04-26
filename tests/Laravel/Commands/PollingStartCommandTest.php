@@ -7,6 +7,7 @@ namespace BushlanovDev\MaxMessengerBot\Tests\Laravel\Commands;
 use BushlanovDev\MaxMessengerBot\Laravel\Commands\PollingStartCommand;
 use BushlanovDev\MaxMessengerBot\Laravel\MaxBotManager;
 use Illuminate\Support\Facades\Log;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -15,6 +16,7 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[CoversClass(PollingStartCommand::class)]
+#[AllowMockObjectsWithoutExpectations]
 #[UsesClass(MaxBotManager::class)]
 final class PollingStartCommandTest extends TestCase
 {

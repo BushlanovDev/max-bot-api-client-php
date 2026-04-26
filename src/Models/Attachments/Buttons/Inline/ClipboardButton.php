@@ -7,11 +7,10 @@ namespace BushlanovDev\MaxMessengerBot\Models\Attachments\Buttons\Inline;
 use BushlanovDev\MaxMessengerBot\Enums\InlineButtonType;
 
 /**
- * Opens the bot's mini-application.
+ * A button that, when clicked, copies text to the clipboard.
  */
 final readonly class ClipboardButton extends AbstractInlineButton
 {
-    
     public ?string $payload;
 
     /**
@@ -21,7 +20,7 @@ final readonly class ClipboardButton extends AbstractInlineButton
     public function __construct(string $text, string $payload)
     {
         parent::__construct(InlineButtonType::Clipboard, $text);
-        
+
         $this->payload = $payload;
     }
 }
