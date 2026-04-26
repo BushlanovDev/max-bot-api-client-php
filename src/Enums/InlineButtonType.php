@@ -13,4 +13,5 @@ enum InlineButtonType: string
     case OpenApp = 'open_app';
     case Message = 'message';
     case Chat = 'chat';
+    case Clipboard = 'clipboard';
 }
