@@ -84,8 +84,25 @@ $api = new Api('YOUR_BOT_API_TOKEN');
 Так же вы можете создать экземпляр бота гибко настроив все зависимости под свои нужды.
 
 ```php
+$guzzle = new \GuzzleHttp\Client([
+    'timeout' => 10,
+    'connect_timeout' => 5,
+    'read_timeout' => 10,
+    'headers' => ['User-Agent' => 'max-bot-api-client-php'],
+    // 'verify' => false, либо путь до сертификата  '/path/to/cert.pem'
+]);
+$httpFactory = new \GuzzleHttp\Psr7\HttpFactory();
+$client = new \BushlanovDev\MaxMessengerBot\Client(
+    $accessToken,
+    $guzzle,
+    $httpFactory,
+    $httpFactory,
+    'https://platform-api2.max.ru',
+);
+
 $api = new Api(
-    client: new Client(...),
+    accessToken: 'YOUR_BOT_API_TOKEN',
+    client: $client,
     modelFactory: new ModelFactory(),
     logger: new YourPsrLogger(),
 );
