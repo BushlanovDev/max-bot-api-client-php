@@ -54,6 +54,15 @@ use BushlanovDev\MaxMessengerBot\Api;
 
 $api = new Api('YOUR_BOT_API_TOKEN');
 
+// Использовать свой сертификат
+$api = new Api('YOUR_BOT_API_TOKEN', guzzleConfig: ['verify' => '/path/to/cert.crt']);
+
+// Настроить прокси и таймауты
+$api = new Api('YOUR_BOT_API_TOKEN', guzzleConfig: [
+    'timeout' => 60,
+    'proxy' => 'tcp://proxy:8080'
+]);
+
 // Загрузка файла
 $fileAttachmentRequest = $api->uploadAttachment(
     type: UploadType::File,
