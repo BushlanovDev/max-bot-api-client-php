@@ -52,6 +52,14 @@ class Api
 
     public const string API_VERSION = '1.2.5';
 
+    private const array DEFAULT_GUZZLE_CONFIG = [
+        'timeout' => 10,
+        'connect_timeout' => 5,
+        'read_timeout' => 10,
+        'headers' => ['User-Agent' => 'max-bot-api-client-php/' . self::LIBRARY_VERSION . ' PHP/' . PHP_VERSION],
+        'verify' => false
+    ];
+    
     private const string API_BASE_URL = 'https://platform-api2.max.ru';
 
     private const string METHOD_GET = 'GET';
@@ -115,12 +123,10 @@ class Api
                 );
             }
 
-            $guzzle = new \GuzzleHttp\Client([
-                'timeout' => 10,
-                'connect_timeout' => 5,
-                'read_timeout' => 10,
-                'headers' => ['User-Agent' => 'max-bot-api-client-php/' . self::LIBRARY_VERSION . ' PHP/' . PHP_VERSION],
-            ]);
+            $finalGuzzleConfig = $guzzleConfig !== null
+                ? array_merge(self::DEFAULT_GUZZLE_CONFIG, $guzzleConfig)
+                : self::DEFAULT_GUZZLE_CONFIG;
+            $guzzle = new \GuzzleHttp\Client($finalGuzzleConfig);
             $httpFactory = new \GuzzleHttp\Psr7\HttpFactory();
             $client = new Client(
                 $accessToken,
