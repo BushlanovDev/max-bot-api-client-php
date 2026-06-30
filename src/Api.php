@@ -100,7 +100,7 @@ class Api
      * @param ClientApiInterface|null $client Http api client.
      * @param ModelFactory|null $modelFactory The model factory.
      * @param LoggerInterface|null $logger PSR LoggerInterface.
-     * @param array|null $guzzleConfig Additional configuration for the default Guzzle HTTP client.
+     * @param array<string, mixed>|null $guzzleConfig Additional configuration for the default Guzzle HTTP client.
      *
      * @throws InvalidArgumentException
      */
