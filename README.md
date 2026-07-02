@@ -45,6 +45,36 @@ composer require bushlanov-dev/max-bot-api-client-php
 
 ### Использование
 
+>[!TIP] Гибкая настройка Guzzle  
+> Мах часто меняют домен API а теперь еще и сертификат от минцифры.  
+> Если вы не хотите или не можете установить сертификат на прямую в систему, можно собрать объект API с кастомным Guzzle клиентом  
+> Во всех остальных случаях достаточно минимального $api = new Api('YOUR_BOT_API_TOKEN');
+
+```php
+$guzzle = new \GuzzleHttp\Client([
+    'timeout' => 10,
+    'connect_timeout' => 5,
+    'read_timeout' => 10,
+    'headers' => ['User-Agent' => 'max-bot-api-client-php'],
+    'verify' => false, // Отключить проверку либо путь до сертификата '/path/to/cert.pem'
+]);
+
+$httpFactory = new \GuzzleHttp\Psr7\HttpFactory();
+
+$client = new \BushlanovDev\MaxMessengerBot\Client(
+    accessToken: 'YOUR_BOT_API_TOKEN',
+    httpClient: $guzzle,
+    requestFactory: $httpFactory,
+    streamFactory: $httpFactory,
+    baseUrl: 'https://platform-api2.max.ru',
+);
+
+$api = new BushlanovDev\MaxMessengerBot\Api(
+    client: $client,
+    modelFactory: new BushlanovDev\MaxMessengerBot\ModelFactory(),
+);
+```
+
 Отправка сообщения с клавиатурой
 
 ```php
@@ -136,7 +166,7 @@ $handler->handle();
 
 #### Chats
 
-- [x] `GET /chats` (`getChats`) - [*Получение списка всех чатов бота.*](./docs/README.md#Получение-списка-всех-чатов-бота)
+- [x] ~~`GET /chats` (`getChats`) - [*Получение списка всех чатов бота.*](./docs/README.md#Получение-списка-всех-чатов-бота)~~ (deprecated)
 - [x] `GET /chats/{chatLink}` (`getChatByLink`) - [*Получение информации о чате по ссылке.*](./docs/README.md#Получение-информации-о-чате-по-ссылке)
 - [x] `GET /chats/{chatId}` (`getChat`) - [*Получение информации о чате по ID.*](./docs/README.md#Получение-информации-о-чате-по-ID)
 - [x] `PATCH /chats/{chatId}` (`editChat`) - [*Редактирование информации о чате.*](./docs/README.md#Редактирование-информации-о-чате)
