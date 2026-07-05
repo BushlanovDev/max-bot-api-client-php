@@ -45,10 +45,28 @@ composer require bushlanov-dev/max-bot-api-client-php
 
 ### Использование
 
+> [!NOTE] 
+> С 19 июля 2026 основной домен api изменится с platform-api.max.ru на platform-api2.max.ru и начнет использовать чебурнетовский сертификат!  
+> Вам необходимо либо установить сертификат, либо отключить его проверку, оба варианта описаны ниже.
+
+Установка сертификата на примере ОС Ubuntu
+
+```bash
+# корневой сертификат
+curl -k -O "https://gu-st.ru/content/Other/doc/russian_trusted_root_ca.cer"
+# промежуточный сертификат
+curl -k -O "https://gu-st.ru/content/Other/doc/russian_trusted_sub_ca.cer"
+
+sudo cp russian_trusted_root_ca.cer /usr/local/share/ca-certificates/russian_trusted_root_ca.crt
+sudo cp russian_trusted_sub_ca.cer  /usr/local/share/ca-certificates/russian_trusted_sub_ca.crt
+
+sudo update-ca-certificates
+```
+
 > [!TIP] 
 > **Гибкая настройка Guzzle**  
-> Мах часто меняют домен API а теперь еще и сертификат от минцифры.  
-> Если вы не хотите или не можете установить сертификат на прямую в систему, можно собрать объект API с кастомным Guzzle клиентом  
+> Мах часто меняют домен API а теперь еще и сертификат.  
+> Если вы не хотите или не можете установить сертификат на прямую в систему, можно собрать объект API с кастомным Guzzle клиентом и отключить проверку сертификата.  
 > Во всех остальных случаях достаточно минимального $api = new Api('YOUR_BOT_API_TOKEN');
 
 ```php
