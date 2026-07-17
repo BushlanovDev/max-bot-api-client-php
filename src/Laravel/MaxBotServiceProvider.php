@@ -76,7 +76,7 @@ class MaxBotServiceProvider extends ServiceProvider
                 $guzzle,
                 $httpFactory,
                 $httpFactory,
-                $config->get('maxbot.base_url', 'https://platform-api.max.ru'),
+                $config->get('maxbot.base_url', 'https://platform-api2.max.ru'),
                 $config->get('maxbot.api_version'),
                 $logger,
             );
