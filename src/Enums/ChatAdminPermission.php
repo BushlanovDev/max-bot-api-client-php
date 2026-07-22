@@ -20,4 +20,7 @@ enum ChatAdminPermission: string
     case PostEditDeleteMessage = 'post_edit_delete_message';
     case EditMessage = 'edit_message';
     case DeleteMessage = 'delete_message';
+    case Delete = 'delete';
+    case Edit = 'edit';
+    case ViewStats = 'view_stats';
 }
