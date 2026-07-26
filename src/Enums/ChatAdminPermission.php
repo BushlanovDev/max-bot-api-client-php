@@ -17,8 +17,8 @@ enum ChatAdminPermission: string
     case Write = 'write';
     case CanCall = 'can_call';
     case EditLink = 'edit_link';
-    case PostEditDeleteMessage = 'post_edit_delete_message';
-    case EditMessage = 'edit_message';
+    case PostEditDeleteMessage = 'post_edit_delete_message';  // @deprecated use write
+    case EditMessage = 'edit_message'; // @deprecated use edit
     case DeleteMessage = 'delete_message';
     case Delete = 'delete';
     case Edit = 'edit';

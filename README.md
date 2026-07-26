@@ -85,7 +85,7 @@ $client = new \BushlanovDev\MaxMessengerBot\Client(
     httpClient: $guzzle,
     requestFactory: $httpFactory,
     streamFactory: $httpFactory,
-    baseUrl: 'https://platform-api2.max.ru',
+    baseUrl: BushlanovDev\MaxMessengerBot\Api::API_BASE_URL,
 );
 
 $api = new BushlanovDev\MaxMessengerBot\Api(

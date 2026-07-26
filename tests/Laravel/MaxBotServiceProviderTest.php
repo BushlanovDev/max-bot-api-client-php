@@ -182,6 +182,30 @@ final class MaxBotServiceProviderTest extends TestCase
         $this->assertSame('test-version', $apiVersionProp->getValue($client));
     }
 
+    /**
+     * @return array<string, array{0: mixed}>
+     */
+    public static function falsyBaseUrlProvider(): array
+    {
+        return [
+            'null (MAXBOT_BASE_URL unset)' => [null],
+            'empty string' => [''],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('falsyBaseUrlProvider')]
+    public function clientFallsBackToApiBaseUrlConstantWhenBaseUrlIsFalsy(mixed $falsyBaseUrl): void
+    {
+        $this->app['config']->set('maxbot.base_url', $falsyBaseUrl);
+
+        /** @var Client $client */
+        $client = $this->app->make(ClientApiInterface::class);
+
+        $baseUrlProp = (new ReflectionClass($client))->getProperty('baseUrl');
+        $this->assertSame(Api::API_BASE_URL, $baseUrlProp->getValue($client));
+    }
+
     #[Test]
     public function clientIsConfiguredWithApplicationLoggerWhenLoggingIsEnabled(): void
     {
