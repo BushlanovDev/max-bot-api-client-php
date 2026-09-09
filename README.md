@@ -16,6 +16,8 @@
 
 > Если вы новичок, то можете прочитать [официальную документацию](https://dev.max.ru/), написанную разработчиками Max.
 
+> ℹ️ С полной документацией [вы можете ознакомиться тут](./docs/README.md).
+
 ### Получение токена
 
 Откройте диалог с [MasterBot](https://max.ru/MasterBot), следуйте инструкциям и создайте нового бота. После создания
@@ -42,6 +44,55 @@ composer require bushlanov-dev/max-bot-api-client-php
 ```
 
 ### Использование
+
+> [!NOTE] 
+> С 19 июля 2026 основной домен api изменится с platform-api.max.ru на platform-api2.max.ru и начнет использовать чебурнетовский сертификат!  
+> Вам необходимо либо установить сертификат, либо отключить его проверку, оба варианта описаны ниже.
+
+Установка сертификата на примере ОС Ubuntu
+
+```bash
+# корневой сертификат
+curl -k -O "https://gu-st.ru/content/Other/doc/russian_trusted_root_ca.cer"
+# промежуточный сертификат
+curl -k -O "https://gu-st.ru/content/Other/doc/russian_trusted_sub_ca.cer"
+
+sudo cp russian_trusted_root_ca.cer /usr/local/share/ca-certificates/russian_trusted_root_ca.crt
+sudo cp russian_trusted_sub_ca.cer  /usr/local/share/ca-certificates/russian_trusted_sub_ca.crt
+
+sudo update-ca-certificates
+```
+
+> [!TIP] 
+> **Гибкая настройка Guzzle**  
+> Мах часто меняют домен API а теперь еще и сертификат.  
+> Если вы не хотите или не можете установить сертификат на прямую в систему, можно собрать объект API с кастомным Guzzle клиентом и отключить проверку сертификата.  
+> Во всех остальных случаях достаточно минимального $api = new Api('YOUR_BOT_API_TOKEN');
+
+```php
+$guzzle = new \GuzzleHttp\Client([
+    'timeout' => 10,
+    'connect_timeout' => 5,
+    'read_timeout' => 10,
+    'headers' => ['User-Agent' => 'max-bot-api-client-php'],
+    'verify' => false, // Отключить проверку либо путь до сертификата '/path/to/cert.pem'
+]);
+
+$httpFactory = new \GuzzleHttp\Psr7\HttpFactory();
+
+$client = new \BushlanovDev\MaxMessengerBot\Client(
+    accessToken: 'YOUR_BOT_API_TOKEN',
+    httpClient: $guzzle,
+    requestFactory: $httpFactory,
+    streamFactory: $httpFactory,
+    baseUrl: BushlanovDev\MaxMessengerBot\Api::API_BASE_URL,
+);
+
+$api = new BushlanovDev\MaxMessengerBot\Api(
+    client: $client,
+    modelFactory: new BushlanovDev\MaxMessengerBot\ModelFactory(),
+);
+```
 
 Отправка сообщения с клавиатурой
 
@@ -134,7 +185,7 @@ $handler->handle();
 
 #### Chats
 
-- [x] `GET /chats` (`getChats`) - [*Получение списка всех чатов бота.*](./docs/README.md#Получение-списка-всех-чатов-бота)
+- [x] ~~`GET /chats` (`getChats`) - [*Получение списка всех чатов бота.*](./docs/README.md#Получение-списка-всех-чатов-бота-deprecated)~~ (deprecated)
 - [x] `GET /chats/{chatLink}` (`getChatByLink`) - [*Получение информации о чате по ссылке.*](./docs/README.md#Получение-информации-о-чате-по-ссылке)
 - [x] `GET /chats/{chatId}` (`getChat`) - [*Получение информации о чате по ID.*](./docs/README.md#Получение-информации-о-чате-по-ID)
 - [x] `PATCH /chats/{chatId}` (`editChat`) - [*Редактирование информации о чате.*](./docs/README.md#Редактирование-информации-о-чате)

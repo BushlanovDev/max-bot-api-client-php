@@ -6,7 +6,7 @@
     - `GET /me` (`getBotInfo`) - [*Получение информации о боте.*](#Получение-информации-о-боте)
     - `PATCH /me` (`editBotInfo`) - [*Редактирование информации о боте.*](#Редактирование-информации-о-боте)
 - [Чаты](#Чаты)
-    - `GET /chats` (`getChats`) - [*Получение списка всех чатов бота.*](#Получение-списка-всех-чатов-бота)
+    - ~~`GET /chats` (`getChats`)~~ - [*Получение списка всех чатов бота.*](#Получение-списка-всех-чатов-бота-deprecated) (deprecated)
     - `GET /chats/{chatLink}` (`getChatByLink`) - [*Получение информации о чате по ссылке.*](#Получение-информации-о-чате-по-ссылке)
     - `GET /chats/{chatId}` (`getChat`) - [*Получение информации о чате по ID.*](#Получение-информации-о-чате-по-ID)
     - `PATCH /chats/{chatId}` (`editChat`) - [*Редактирование информации о чате.*](#Редактирование-информации-о-чате)
@@ -84,10 +84,27 @@ $api = new Api('YOUR_BOT_API_TOKEN');
 Так же вы можете создать экземпляр бота гибко настроив все зависимости под свои нужды.
 
 ```php
-$api = new Api(
-    client: new Client(...),
-    modelFactory: new ModelFactory(),
-    logger: new YourPsrLogger(),
+$guzzle = new \GuzzleHttp\Client([
+    'timeout' => 10,
+    'connect_timeout' => 5,
+    'read_timeout' => 10,
+    'headers' => ['User-Agent' => 'max-bot-api-client-php'],
+    // 'verify' => false, // Отключить проверку либо путь до сертификата '/path/to/cert.pem'
+]);
+
+$httpFactory = new \GuzzleHttp\Psr7\HttpFactory();
+
+$client = new \BushlanovDev\MaxMessengerBot\Client(
+    accessToken: 'YOUR_BOT_API_TOKEN',
+    httpClient: $guzzle,
+    requestFactory: $httpFactory,
+    streamFactory: $httpFactory,
+    baseUrl: BushlanovDev\MaxMessengerBot\Api::API_BASE_URL,
+);
+
+$api = new BushlanovDev\MaxMessengerBot\Api(
+    client: $client,
+    modelFactory: new BushlanovDev\MaxMessengerBot\ModelFactory(),
 );
 ```
 
@@ -119,7 +136,7 @@ $botInfo = $api->editBotInfo(
 
 ## Чаты
 
-### Получение списка всех чатов бота
+### Получение списка всех чатов бота (deprecated)
 
 Возвращает информацию о чатах, в которых участвовал бот. 
 Результат включает список чатов и маркер для перехода к следующей странице.
