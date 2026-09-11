@@ -25,4 +25,10 @@ enum UpdateType: string
     case BotStopped = 'bot_stopped';
     case ChatTitleChanged = 'chat_title_changed';
     case MessageChatCreated = 'message_chat_created';
+    case CommentCreated = 'comment_created';
+    case CommentEdited = 'comment_edited';
+    case CommentRemoved = 'comment_removed';
+    case BotAdminPermissionChanged = 'bot_admin_permissions_changed';
+    case MessageDelivered = 'message_delivered';
+    case MessageRead = 'message_read';
 }
