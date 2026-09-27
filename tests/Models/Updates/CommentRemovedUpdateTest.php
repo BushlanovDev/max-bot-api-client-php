@@ -31,4 +31,20 @@ final class CommentRemovedUpdateTest extends TestCase
         $this->assertSame(42, $update->userId);
         $this->assertSame('mid.post', $update->postId);
     }
+
+    #[Test]
+    public function postIdMayBeNull(): void
+    {
+        // The official TypeScript client types post_id as `string | null`
+        $update = CommentRemovedUpdate::fromArray([
+            'update_type' => UpdateType::CommentRemoved->value,
+            'timestamp' => 1678886400000,
+            'message_id' => 'mid.comment',
+            'chat_id' => -100,
+            'user_id' => 42,
+            'post_id' => null,
+        ]);
+
+        $this->assertNull($update->postId);
+    }
 }
