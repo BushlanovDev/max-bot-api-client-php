@@ -11,7 +11,9 @@ use BushlanovDev\MaxMessengerBot\ClientApiInterface;
 use BushlanovDev\MaxMessengerBot\Enums\AttachmentType;
 use BushlanovDev\MaxMessengerBot\Enums\ChatAdminPermission;
 use BushlanovDev\MaxMessengerBot\Enums\InlineButtonType;
+use BushlanovDev\MaxMessengerBot\Enums\ChatType;
 use BushlanovDev\MaxMessengerBot\Enums\MessageFormat;
+use BushlanovDev\MaxMessengerBot\Enums\MessageLinkType;
 use BushlanovDev\MaxMessengerBot\Enums\SenderAction;
 use BushlanovDev\MaxMessengerBot\Enums\UpdateType;
 use BushlanovDev\MaxMessengerBot\Enums\UploadType;
@@ -47,6 +49,9 @@ use BushlanovDev\MaxMessengerBot\Models\ChatMembersList;
 use BushlanovDev\MaxMessengerBot\Models\ChatPatch;
 use BushlanovDev\MaxMessengerBot\Models\Message;
 use BushlanovDev\MaxMessengerBot\Models\MessageBody;
+use BushlanovDev\MaxMessengerBot\Models\CommentMessage;
+use BushlanovDev\MaxMessengerBot\Models\CommentMessageBody;
+use BushlanovDev\MaxMessengerBot\Models\MessageLink;
 use BushlanovDev\MaxMessengerBot\Models\Recipient;
 use BushlanovDev\MaxMessengerBot\Models\Result;
 use BushlanovDev\MaxMessengerBot\Models\UserWithPhoto;
@@ -86,6 +91,9 @@ use RuntimeException;
 #[UsesClass(Message::class)]
 #[UsesClass(MessageBody::class)]
 #[UsesClass(Recipient::class)]
+#[UsesClass(CommentMessage::class)]
+#[UsesClass(CommentMessageBody::class)]
+#[UsesClass(MessageLink::class)]
 #[UsesClass(UserWithPhoto::class)]
 #[UsesClass(CallbackButton::class)]
 #[UsesClass(InlineKeyboardAttachmentRequestPayload::class)]
@@ -1330,6 +1338,153 @@ final class ApiTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertSame($expectedMessages, $result);
+    }
+
+    #[Test]
+    public function getCommentsCallsClientWithAllParameters(): void
+    {
+        $expectedQuery = [
+            'comment_ids' => 'mid.c1,mid.c2',
+            'before' => 1678886400000,
+            'after' => 1678880000000,
+            'count' => 20,
+        ];
+        $rawResponse = ['messages' => [$this->commentData()]];
+        $expectedComments = [$this->comment()];
+
+        $this->clientMock->expects($this->once())
+            ->method('request')
+            ->with('GET', '/messages/mid.post/comments', $expectedQuery)
+            ->willReturn($rawResponse);
+
+        $this->modelFactoryMock->expects($this->once())
+            ->method('createCommentMessages')
+            ->with($rawResponse)
+            ->willReturn($expectedComments);
+
+        $result = $this->api->getComments('mid.post', ['mid.c1', 'mid.c2'], 1678886400000, 1678880000000, 20);
+
+        $this->assertSame($expectedComments, $result);
+    }
+
+    #[Test]
+    public function getCommentsOmitsEmptyParameters(): void
+    {
+        $this->clientMock->expects($this->once())
+            ->method('request')
+            ->with('GET', '/messages/mid.post/comments', [])
+            ->willReturn(['messages' => []]);
+
+        $this->modelFactoryMock->expects($this->once())
+            ->method('createCommentMessages')
+            ->willReturn([]);
+
+        $this->assertSame([], $this->api->getComments('mid.post'));
+    }
+
+    #[Test]
+    public function getCommentByIdRequestsTheSingleComment(): void
+    {
+        $expectedComment = $this->comment();
+
+        $this->clientMock->expects($this->once())
+            ->method('request')
+            ->with('GET', '/messages/mid.post/comments/mid.comment')
+            ->willReturn($this->commentData());
+
+        $this->modelFactoryMock->expects($this->once())
+            ->method('createCommentMessage')
+            ->with($this->commentData())
+            ->willReturn($expectedComment);
+
+        $this->assertSame($expectedComment, $this->api->getCommentById('mid.post', 'mid.comment'));
+    }
+
+    #[Test]
+    public function sendCommentPostsNewCommentBody(): void
+    {
+        $link = new MessageLink(MessageLinkType::Reply, 'mid.other');
+        $rawResponse = ['message' => $this->commentData()];
+        $expectedComment = $this->comment();
+
+        $this->clientMock->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/messages/mid.post/comments',
+                ['disable_link_preview' => true],
+                ['text' => 'Nice post', 'format' => 'markdown', 'link' => $link],
+            )
+            ->willReturn($rawResponse);
+
+        $this->modelFactoryMock->expects($this->once())
+            ->method('createCommentMessageFromSendResponse')
+            ->with($rawResponse)
+            ->willReturn($expectedComment);
+
+        $result = $this->api->sendComment('mid.post', 'Nice post', MessageFormat::Markdown, $link, true);
+
+        $this->assertSame($expectedComment, $result);
+    }
+
+    #[Test]
+    public function editCommentPutsNewTextForTheComment(): void
+    {
+        $expectedResult = new Result(true, null);
+
+        $this->clientMock->expects($this->once())
+            ->method('request')
+            ->with('PUT', '/messages/mid.post/comments', ['comment_id' => 'mid.comment'], ['text' => 'Edited'])
+            ->willReturn(['success' => true]);
+
+        $this->modelFactoryMock->expects($this->once())
+            ->method('createResult')
+            ->with(['success' => true])
+            ->willReturn($expectedResult);
+
+        $this->assertSame($expectedResult, $this->api->editComment('mid.post', 'mid.comment', 'Edited'));
+    }
+
+    #[Test]
+    public function deleteCommentDeletesByCommentId(): void
+    {
+        $expectedResult = new Result(true, null);
+
+        $this->clientMock->expects($this->once())
+            ->method('request')
+            ->with('DELETE', '/messages/mid.post/comments', ['comment_id' => 'mid.comment'])
+            ->willReturn(['success' => true]);
+
+        $this->modelFactoryMock->expects($this->once())
+            ->method('createResult')
+            ->with(['success' => true])
+            ->willReturn($expectedResult);
+
+        $this->assertSame($expectedResult, $this->api->deleteComment('mid.post', 'mid.comment'));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function commentData(): array
+    {
+        return [
+            'timestamp' => 1,
+            'body' => ['mid' => 'mid.comment', 'seq' => 1, 'text' => 'Nice post'],
+            'recipient' => ['chat_type' => 'channel', 'chat_id' => -100, 'post_id' => 'mid.post'],
+        ];
+    }
+
+    private function comment(): CommentMessage
+    {
+        return new CommentMessage(
+            1,
+            new Recipient(ChatType::Channel, null, -100, 'mid.post'),
+            new CommentMessageBody('mid.comment', 1, 'Nice post', null),
+            null,
+            null,
+            null,
+        );
     }
 
     #[Test]

@@ -29,6 +29,10 @@ use BushlanovDev\MaxMessengerBot\Models\Attachments\ShareAttachment;
 use BushlanovDev\MaxMessengerBot\Models\BotCommand;
 use BushlanovDev\MaxMessengerBot\Models\BotCommandsInfo;
 use BushlanovDev\MaxMessengerBot\Models\BotInfo;
+use BushlanovDev\MaxMessengerBot\Models\Markup\QuoteMarkup;
+use BushlanovDev\MaxMessengerBot\Models\CommentLinkedMessage;
+use BushlanovDev\MaxMessengerBot\Models\CommentMessage;
+use BushlanovDev\MaxMessengerBot\Models\CommentMessageBody;
 use BushlanovDev\MaxMessengerBot\Models\Chat;
 use BushlanovDev\MaxMessengerBot\Models\ChatList;
 use BushlanovDev\MaxMessengerBot\Models\ChatMember;
@@ -67,6 +71,10 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(BotInfo::class)]
 #[UsesClass(BotCommand::class)]
 #[UsesClass(BotCommandsInfo::class)]
+#[UsesClass(CommentMessage::class)]
+#[UsesClass(CommentMessageBody::class)]
+#[UsesClass(CommentLinkedMessage::class)]
+#[UsesClass(QuoteMarkup::class)]
 #[UsesClass(Result::class)]
 #[UsesClass(Subscription::class)]
 #[UsesClass(ArrayOf::class)]
@@ -196,6 +204,58 @@ final class ModelFactoryTest extends TestCase
         $this->assertInstanceOf(BotCommand::class, $botCommands->commands[0]);
         $this->assertSame('start', $botCommands->commands[0]->name);
         $this->assertNull($botCommands->commands[1]->description);
+    }
+
+    #[Test]
+    public function createCommentMessageHydratesBodyMarkupAndLink(): void
+    {
+        $comment = $this->factory->createCommentMessage([
+            'timestamp' => 1,
+            'recipient' => ['chat_type' => 'channel', 'chat_id' => -100, 'post_id' => 'mid.post'],
+            'body' => [
+                'mid' => 'mid.comment',
+                'seq' => 3,
+                'text' => 'Quoted reply',
+                'markup' => [['type' => 'quote', 'from' => 0, 'length' => 6]],
+            ],
+            'sender' => ['user_id' => 42, 'first_name' => 'Anna', 'is_bot' => false],
+            'link' => [
+                'type' => 'reply',
+                'message' => [
+                    'mid' => 'mid.parent',
+                    'seq' => 2,
+                    'text' => 'Parent',
+                    'markup' => [['type' => 'strong', 'from' => 0, 'length' => 6]],
+                ],
+            ],
+        ]);
+
+        $this->assertInstanceOf(CommentMessage::class, $comment);
+        $this->assertSame('mid.post', $comment->recipient->postId);
+        $this->assertSame('Quoted reply', $comment->body->text);
+        $this->assertInstanceOf(QuoteMarkup::class, $comment->body->markup[0]);
+        $this->assertSame(42, $comment->sender?->userId);
+        $this->assertInstanceOf(CommentLinkedMessage::class, $comment->link);
+        $this->assertInstanceOf(StrongMarkup::class, $comment->link->message->markup[0]);
+        $this->assertNull($comment->stat);
+    }
+
+    #[Test]
+    public function createCommentMessagesAndSendResponseUnwrapComments(): void
+    {
+        $data = [
+            'timestamp' => 1,
+            'recipient' => ['chat_type' => 'channel', 'chat_id' => -100],
+            'body' => ['mid' => 'mid.comment', 'seq' => 1],
+        ];
+
+        $list = $this->factory->createCommentMessages(['messages' => [$data, $data]]);
+        $sent = $this->factory->createCommentMessageFromSendResponse(['message' => $data]);
+
+        $this->assertCount(2, $list);
+        $this->assertContainsOnlyInstancesOf(CommentMessage::class, $list);
+        $this->assertSame([], $this->factory->createCommentMessages([]));
+        $this->assertSame('mid.comment', $sent->body->mid);
     }
 
     #[Test]

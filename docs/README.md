@@ -40,6 +40,12 @@
     - `GET /messages/{messageId}` (`getMessageById`) - [*Получение сообщения по ID.*](#Получение-сообщения-по-ID)
     - `GET /videos/{videoToken}` (`getVideoAttachmentDetails`) - [*Получение детальной информации о видео.*](#Получение-детальной-информации-о-видео)
     - `POST /answers` (`answerOnCallback`) - [*Ответ на нажатие callback-кнопки.*](#Ответ-на-нажатие-callback-кнопки)
+- [Комментарии](#Комментарии)
+    - `GET /messages/{messageId}/comments` (`getComments`) - [*Получение комментариев к посту.*](#Получение-комментариев-к-посту)
+    - `GET /messages/{messageId}/comments/{commentId}` (`getCommentById`) - [*Получение комментария по ID.*](#Получение-комментария-по-ID)
+    - `POST /messages/{messageId}/comments` (`sendComment`) - [*Отправка комментария.*](#Отправка-комментария)
+    - `PUT /messages/{messageId}/comments` (`editComment`) - [*Редактирование комментария.*](#Редактирование-комментария)
+    - `DELETE /messages/{messageId}/comments` (`deleteComment`) - [*Удаление комментария.*](#Удаление-комментария)
 - [Laravel](#Laravel)
     - [Регистрация пакета](#Регистрация-пакета)
     - [Настройка](#Настройка)
@@ -457,6 +463,60 @@ $api->answerOnCallback(
     format: null,                      // Формат сообщения Markdown или HTML (необязательно)
     notify: true,                      // Заполните это, если хотите просто отправить одноразовое уведомление пользователю (необязательно)
 );
+```
+
+## Комментарии
+
+Комментарии оставляют к постам в каналах. В отличие от сообщений, у комментария нет вложений и публичной ссылки.
+Для некоторых методов бот должен быть администратором канала с нужными правами. События `comment_created`,
+`comment_edited` и `comment_removed` приходят, только если у бота есть право `read_all_messages`.
+
+### Получение комментариев к посту
+
+Возвращает комментарии к посту, начиная с последнего.
+
+```php
+$comments = $api->getComments(
+    messageId: 'mid.post',               // Идентификатор поста
+    commentIds: ['mid.1', 'mid.2'],      // Идентификаторы нужных комментариев (необязательно)
+    before: 1678886400000,               // Комментарии до этого времени (необязательно)
+    after: 1678880000000,                // Комментарии после этого времени (необязательно)
+    count: 50,                           // Максимальное количество комментариев в ответе, 1-100 (необязательно)
+);
+```
+
+### Получение комментария по ID
+
+```php
+$comment = $api->getCommentById('mid.post', 'mid.comment');
+```
+
+### Отправка комментария
+
+```php
+$comment = $api->sendComment(
+    messageId: 'mid.post',               // Идентификатор поста
+    text: 'Спасибо за пост!',            // Текст комментария
+    format: MessageFormat::Markdown,     // Формат текста Markdown или HTML (необязательно)
+    link: new MessageLink(MessageLinkType::Reply, 'mid.comment'), // Ответ на другой комментарий (необязательно)
+    disableLinkPreview: false,           // Не генерировать превью ссылок (необязательно)
+);
+```
+
+### Редактирование комментария
+
+```php
+$result = $api->editComment(
+    messageId: 'mid.post',
+    commentId: 'mid.comment',
+    text: 'Исправленный текст',
+);
+```
+
+### Удаление комментария
+
+```php
+$result = $api->deleteComment('mid.post', 'mid.comment');
 ```
 
 ## Laravel

@@ -38,6 +38,8 @@ use BushlanovDev\MaxMessengerBot\Models\Chat;
 use BushlanovDev\MaxMessengerBot\Models\ChatList;
 use BushlanovDev\MaxMessengerBot\Models\ChatMember;
 use BushlanovDev\MaxMessengerBot\Models\ChatMembersList;
+use BushlanovDev\MaxMessengerBot\Models\CommentMessage;
+use BushlanovDev\MaxMessengerBot\Models\CommentMessageBody;
 use BushlanovDev\MaxMessengerBot\Models\Markup\AbstractMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\EmphasizedMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\HeadingMarkup;
@@ -222,6 +224,74 @@ readonly class ModelFactory
         return isset($data['messages']) && is_array($data['messages'])
             ? array_map([$this, 'createMessage'], $data['messages'])
             : [];
+    }
+
+    /**
+     * Comment to a post in a channel.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return CommentMessage
+     * @throws ReflectionException
+     */
+    public function createCommentMessage(array $data): CommentMessage
+    {
+        if (isset($data['body']) && is_array($data['body'])) {
+            $data['body'] = $this->createCommentMessageBody($data['body']);
+        }
+
+        if (isset($data['link']['message']) && is_array($data['link']['message'])) {
+            $data['link']['message'] = $this->createCommentMessageBody($data['link']['message']);
+        }
+
+        return CommentMessage::fromArray($data);
+    }
+
+    /**
+     * List of comments.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return CommentMessage[]
+     */
+    public function createCommentMessages(array $data): array
+    {
+        return isset($data['messages']) && is_array($data['messages'])
+            ? array_map([$this, 'createCommentMessage'], $data['messages'])
+            : [];
+    }
+
+    /**
+     * Creates a CommentMessage from the response of the sendComment endpoint.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return CommentMessage
+     * @throws ReflectionException
+     */
+    public function createCommentMessageFromSendResponse(array $data): CommentMessage
+    {
+        return $this->createCommentMessage($data['message']);
+    }
+
+    /**
+     * Creates a CommentMessageBody from raw API data, handling polymorphic markup.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return CommentMessageBody
+     * @throws ReflectionException
+     */
+    private function createCommentMessageBody(array $data): CommentMessageBody
+    {
+        if (isset($data['markup']) && is_array($data['markup'])) {
+            $data['markup'] = array_map(
+                [$this, 'createMarkupElement'],
+                $data['markup'],
+            );
+        }
+
+        return CommentMessageBody::fromArray($data);
     }
 
     /**

@@ -225,6 +225,14 @@ $handler->handle();
 - [x] `GET /videos/{videoToken}` (`getVideoAttachmentDetails`) - [*Получение детальной информации о видео.*](./docs/README.md#Получение-детальной-информации-о-видео)
 - [x] `POST /answers` (`answerOnCallback`) - [*Ответ на нажатие callback-кнопки.*](./docs/README.md#Ответ-на-нажатие-callback-кнопки)
 
+#### Comments
+
+- [x] `GET /messages/{messageId}/comments` (`getComments`) - [*Получение комментариев к посту.*](./docs/README.md#Получение-комментариев-к-посту)
+- [x] `GET /messages/{messageId}/comments/{commentId}` (`getCommentById`) - [*Получение комментария по ID.*](./docs/README.md#Получение-комментария-по-ID)
+- [x] `POST /messages/{messageId}/comments` (`sendComment`) - [*Отправка комментария.*](./docs/README.md#Отправка-комментария)
+- [x] `PUT /messages/{messageId}/comments` (`editComment`) - [*Редактирование комментария.*](./docs/README.md#Редактирование-комментария)
+- [x] `DELETE /messages/{messageId}/comments` (`deleteComment`) - [*Удаление комментария.*](./docs/README.md#Удаление-комментария)
+
 ## Лицензия
 
 Данная библиотека распространяется под лицензией MIT - подробности см. в файле [LICENSE](LICENSE).
