@@ -12,6 +12,6 @@ enum InlineButtonType: string
     case RequestContact = 'request_contact';
     case OpenApp = 'open_app';
     case Message = 'message';
-    case Chat = 'chat';
+    case Chat = 'chat'; // @deprecated not in the schema since 0.0.33
     case Clipboard = 'clipboard';
 }

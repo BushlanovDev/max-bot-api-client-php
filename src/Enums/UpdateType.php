@@ -24,7 +24,7 @@ enum UpdateType: string
     case BotStarted = 'bot_started';
     case BotStopped = 'bot_stopped';
     case ChatTitleChanged = 'chat_title_changed';
-    case MessageChatCreated = 'message_chat_created';
+    case MessageChatCreated = 'message_chat_created'; // @deprecated not in the schema since 0.0.33
     case CommentCreated = 'comment_created';
     case CommentEdited = 'comment_edited';
     case CommentRemoved = 'comment_removed';

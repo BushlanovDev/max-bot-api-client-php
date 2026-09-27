@@ -7,6 +7,9 @@ namespace BushlanovDev\MaxMessengerBot\Models\Attachments\Buttons\Reply;
 use BushlanovDev\MaxMessengerBot\Enums\ReplyButtonType;
 use BushlanovDev\MaxMessengerBot\Models\AbstractModel;
 
+/**
+ * @deprecated Not part of the Bot API schema since 0.0.33.
+ */
 abstract readonly class AbstractReplyButton extends AbstractModel
 {
     /**

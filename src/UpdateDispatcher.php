@@ -284,6 +284,8 @@ final class UpdateDispatcher
     /**
      * A convenient alias for addHandler(UpdateType::MessageChatCreated, $handler).
      *
+     * @deprecated message_chat_created is not in the Bot API schema since 0.0.33.
+     *
      * @param callable(Models\Updates\MessageChatCreatedUpdate, Api): void $handler
      *
      * @return $this

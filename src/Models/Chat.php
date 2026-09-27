@@ -26,7 +26,7 @@ final readonly class Chat extends AbstractModel
      * @param string|null $description Chat description.
      * @param UserWithPhoto|null $dialogWithUser Another user in conversation. For `dialog` type chats only.
      * @param int|null $messagesCount Messages count in chat. Only for group chats and channels. Not available for dialogs.
-     * @param string|null $chatMessageId Identifier of message that contains `chat` button initialized chat.
+     * @param string|null $chatMessageId Identifier of message that contains `chat` button initialized chat. Deprecated: not in the schema since 0.0.33.
      * @param Message|null $pinnedMessage Pinned message in chat or channel. Returned only when single chat is requested.
      * @param array<string, int>|null $participants List of participants in chat. Returned only when single chat is requested.
      */

@@ -349,6 +349,8 @@ readonly class MaxBotManager
     /**
      * Register a message chat created handler.
      *
+     * @deprecated message_chat_created is not in the Bot API schema since 0.0.33.
+     *
      * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
      *
      * @throws BindingResolutionException

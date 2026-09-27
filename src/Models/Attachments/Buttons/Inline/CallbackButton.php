@@ -18,7 +18,7 @@ final readonly class CallbackButton extends AbstractInlineButton
     /**
      * @param string $text Visible button text (1 to 128 characters).
      * @param string $payload Button token (up to 1024 characters).
-     * @param Intent|null $intent The intent of the button. Affects how it is displayed by the client.
+     * @param Intent|null $intent The intent of the button. Affects how it is displayed by the client. Deprecated: not in the schema since 0.0.33.
      */
     public function __construct(string $text, string $payload, ?Intent $intent = null)
     {

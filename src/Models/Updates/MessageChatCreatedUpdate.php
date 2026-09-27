@@ -10,6 +10,8 @@ use BushlanovDev\MaxMessengerBot\Models\Chat;
 /**
  * Bot will get this update when a chat has been created as soon as
  * the first user clicked a `chat` button.
+ *
+ * @deprecated Not part of the Bot API schema since 0.0.33.
  */
 final readonly class MessageChatCreatedUpdate extends AbstractUpdate
 {

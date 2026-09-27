@@ -6,6 +6,9 @@ namespace BushlanovDev\MaxMessengerBot\Models\Attachments\Buttons\Reply;
 
 use BushlanovDev\MaxMessengerBot\Enums\ReplyButtonType;
 
+/**
+ * @deprecated Not part of the Bot API schema since 0.0.33.
+ */
 final readonly class SendGeoLocationButton extends AbstractReplyButton
 {
     /**

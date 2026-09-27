@@ -605,6 +605,8 @@ class Api
      *
      * @param string $chatLink Public chat link (e.g., '@mychannel') or username (e.g., '@john_doe').
      *
+     * @deprecated `GET /chats/{chatLink}` is not in the Bot API docs and schema since 0.0.33.
+     *
      * @return Chat
      * @throws ClientApiException
      * @throws NetworkException
@@ -626,6 +628,9 @@ class Api
      *
      * @param int|null $count Number of chats requested (1-100, default 50).
      * @param int|null $marker Points to the next data page. Use null for the first page.
+     *
+     * @deprecated The API does not support `GET /chats` since June 2026. Collect chat ids
+     *             from bot_added and bot_started updates instead.
      *
      * @return ChatList
      * @throws ClientApiException
@@ -653,6 +658,8 @@ class Api
      * Deletes a chat for all participants. The bot must have appropriate permissions.
      *
      * @param int $chatId Chat identifier to delete.
+     *
+     * @deprecated `DELETE /chats/{chatId}` is not in the Bot API docs and schema since 0.0.33.
      *
      * @return Result
      * @throws ClientApiException
@@ -1175,6 +1182,9 @@ class Api
      *
      * @param int $chatId The identifier of the chat.
      * @param int[] $userIds An array of user identifiers to add to the chat.
+     *
+     * @deprecated `POST /chats/{chatId}/members` is limited since 9 September 2026 and removed
+     *             on 30 September 2026; the API offers no replacement.
      *
      * @return Result
      * @throws ClientApiException
