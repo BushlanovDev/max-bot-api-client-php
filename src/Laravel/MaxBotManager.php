@@ -360,6 +360,58 @@ readonly class MaxBotManager
     }
 
     /**
+     * Register a comment created handler.
+     *
+     * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
+     *
+     * @throws BindingResolutionException
+     * @codeCoverageIgnore
+     */
+    public function onCommentCreated(callable|string $handler): void
+    {
+        $this->dispatcher->onCommentCreated($this->resolveHandler($handler));
+    }
+
+    /**
+     * Register a comment edited handler.
+     *
+     * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
+     *
+     * @throws BindingResolutionException
+     * @codeCoverageIgnore
+     */
+    public function onCommentEdited(callable|string $handler): void
+    {
+        $this->dispatcher->onCommentEdited($this->resolveHandler($handler));
+    }
+
+    /**
+     * Register a comment removed handler.
+     *
+     * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
+     *
+     * @throws BindingResolutionException
+     * @codeCoverageIgnore
+     */
+    public function onCommentRemoved(callable|string $handler): void
+    {
+        $this->dispatcher->onCommentRemoved($this->resolveHandler($handler));
+    }
+
+    /**
+     * Register a bot admin permissions changed handler.
+     *
+     * @param callable|string $handler Can be a closure, callable, or Laravel container binding.
+     *
+     * @throws BindingResolutionException
+     * @codeCoverageIgnore
+     */
+    public function onBotAdminPermissionsChanged(callable|string $handler): void
+    {
+        $this->dispatcher->onBotAdminPermissionsChanged($this->resolveHandler($handler));
+    }
+
+    /**
      * Get the API instance.
      * @codeCoverageIgnore
      */

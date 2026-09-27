@@ -43,8 +43,12 @@ use BushlanovDev\MaxMessengerBot\Models\Recipient;
 use BushlanovDev\MaxMessengerBot\Models\Result;
 use BushlanovDev\MaxMessengerBot\Models\Subscription;
 use BushlanovDev\MaxMessengerBot\Models\UpdateList;
+use BushlanovDev\MaxMessengerBot\Models\Updates\BotAdminPermissionsChangedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\BotStartedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\ChatTitleChangedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\CommentCreatedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\CommentEditedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\CommentRemovedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\MessageChatCreatedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\MessageCreatedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\UploadEndpoint;
@@ -104,6 +108,10 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(LocationAttachment::class)]
 #[UsesClass(InlineKeyboardAttachment::class)]
 #[UsesClass(KeyboardPayload::class)]
+#[UsesClass(CommentCreatedUpdate::class)]
+#[UsesClass(CommentEditedUpdate::class)]
+#[UsesClass(CommentRemovedUpdate::class)]
+#[UsesClass(BotAdminPermissionsChangedUpdate::class)]
 final class ModelFactoryTest extends TestCase
 {
     private ModelFactory $factory;
@@ -346,6 +354,45 @@ final class ModelFactoryTest extends TestCase
         $this->assertInstanceOf(Chat::class, $chat);
         $this->assertInstanceOf(Image::class, $chat->icon);
         $this->assertInstanceOf(UserWithPhoto::class, $chat->dialogWithUser);
+    }
+
+    #[Test]
+    public function createUpdateHandlesCommentAndBotPermissionUpdates(): void
+    {
+        $comment = [
+            'timestamp' => 1,
+            'body' => ['mid' => 'mid.comment', 'seq' => 1, 'text' => 'Nice post'],
+            'recipient' => ['chat_type' => 'channel', 'chat_id' => -100, 'post_id' => 'mid.post'],
+        ];
+
+        $created = $this->factory->createUpdate(['update_type' => 'comment_created', 'timestamp' => 1, 'message' => $comment]);
+        $edited = $this->factory->createUpdate(['update_type' => 'comment_edited', 'timestamp' => 2, 'message' => $comment]);
+        $removed = $this->factory->createUpdate([
+            'update_type' => 'comment_removed',
+            'timestamp' => 3,
+            'message_id' => 'mid.comment',
+            'chat_id' => -100,
+            'user_id' => 42,
+            'post_id' => 'mid.post',
+        ]);
+        $permissions = $this->factory->createUpdate([
+            'update_type' => 'bot_admin_permissions_changed',
+            'timestamp' => 4,
+            'chat_id' => -100,
+            'user_id' => 42,
+            'bot_id' => 7,
+            'is_channel' => true,
+            'is_admin' => true,
+            'permissions' => ['read_all_messages', 'write'],
+        ]);
+
+        $this->assertInstanceOf(CommentCreatedUpdate::class, $created);
+        $this->assertSame('Nice post', $created->message->body?->text);
+        $this->assertInstanceOf(CommentEditedUpdate::class, $edited);
+        $this->assertInstanceOf(CommentRemovedUpdate::class, $removed);
+        $this->assertSame('mid.post', $removed->postId);
+        $this->assertInstanceOf(BotAdminPermissionsChangedUpdate::class, $permissions);
+        $this->assertSame([ChatAdminPermission::ReadAllMessages, ChatAdminPermission::Write], $permissions->permissions);
     }
 
     #[Test]

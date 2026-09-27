@@ -57,8 +57,12 @@ use BushlanovDev\MaxMessengerBot\Models\Updates\AbstractUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\BotAddedToChatUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\BotRemovedFromChatUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\BotStartedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\BotAdminPermissionsChangedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\BotStoppedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\ChatTitleChangedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\CommentCreatedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\CommentEditedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\CommentRemovedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\DialogClearedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\DialogMutedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\DialogRemovedUpdate;
@@ -409,6 +413,10 @@ readonly class ModelFactory
                 UpdateType::BotStopped => BotStoppedUpdate::fromArray($data),
                 UpdateType::ChatTitleChanged => ChatTitleChangedUpdate::fromArray($data),
                 UpdateType::MessageChatCreated => MessageChatCreatedUpdate::fromArray($data),
+                UpdateType::CommentCreated => CommentCreatedUpdate::fromArray($data),
+                UpdateType::CommentEdited => CommentEditedUpdate::fromArray($data),
+                UpdateType::CommentRemoved => CommentRemovedUpdate::fromArray($data),
+                UpdateType::BotAdminPermissionChanged => BotAdminPermissionsChangedUpdate::fromArray($data),
                 default => throw new LogicException(
                     'Unknown or unsupported update type received: ' . ($data['update_type'] ?? 'none')
                 ),
