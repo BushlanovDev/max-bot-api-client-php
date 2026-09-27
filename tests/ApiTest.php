@@ -1916,6 +1916,31 @@ final class ApiTest extends TestCase
     }
 
     #[Test]
+    public function answerOnCallbackCanDisableLinkPreview(): void
+    {
+        $expectedResult = new Result(true, null);
+
+        $this->clientMock
+            ->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/answers',
+                ['callback_id' => 'cb.123.abc', 'disable_link_preview' => true],
+                ['message' => ['text' => 'See https://dev.max.ru', 'notify' => true]],
+            )
+            ->willReturn(['success' => true]);
+
+        $this->modelFactoryMock
+            ->expects($this->once())
+            ->method('createResult')
+            ->willReturn($expectedResult);
+
+        $result = $this->api->answerOnCallback('cb.123.abc', text: 'See https://dev.max.ru', disableLinkPreview: true);
+        $this->assertSame($expectedResult, $result);
+    }
+
+    #[Test]
     public function answerOnCallbackWithMessageEdit(): void
     {
         $callbackId = 'cb.456.def';

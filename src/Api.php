@@ -1214,6 +1214,7 @@ class Api
      * @param MessageLink|null $link New link for the edited message.
      * @param MessageFormat|null $format Formatting for the new message text.
      * @param bool $notify Notification setting for the edited message.
+     * @param bool $disableLinkPreview If true, server will not generate media preview for links in the updated text.
      *
      * @return Result
      * @throws ClientApiException
@@ -1229,6 +1230,7 @@ class Api
         ?MessageLink $link = null,
         ?MessageFormat $format = null,
         bool $notify = true,
+        bool $disableLinkPreview = false,
     ): Result {
         $answerBody = ['notification' => $notification];
         if ($text !== null || $attachments !== null || $link !== null) {
@@ -1239,7 +1241,7 @@ class Api
             $this->client->request(
                 self::METHOD_POST,
                 self::ACTION_ANSWERS,
-                ['callback_id' => $callbackId],
+                ['callback_id' => $callbackId] + ($disableLinkPreview ? ['disable_link_preview' => true] : []),
                 array_filter($answerBody, fn($value) => $value !== null)
             )
         );
