@@ -17,6 +17,8 @@ use BushlanovDev\MaxMessengerBot\Models\Attachments\Payloads\PhotoAttachmentRequ
  * @property-read BotCommand[]|null $commands
  * @property-read PhotoAttachmentRequestPayload|null $photo
  * @property-read string|null $name @deprecated Use first_name
+ *
+ * @deprecated The API no longer accepts `PATCH /me`. Use Api::editBotCommands() for commands.
  */
 final readonly class BotPatch extends AbstractPatchModel
 {
