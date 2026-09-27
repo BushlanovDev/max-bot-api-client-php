@@ -18,7 +18,7 @@ final readonly class ChatMember extends AbstractUser
      * @param string|null $lastName User's last name.
      * @param string|null $username User's public username.
      * @param bool $isBot True if the user is a bot.
-     * @param int $lastActivityTime Time of the user's last activity in Max.
+     * @param int|null $lastActivityTime Time of the user's last activity in Max.
      * @param string|null $description User's profile description.
      * @param string|null $avatarUrl URL of the user's avatar.
      * @param string|null $fullAvatarUrl URL of the user's full-sized avatar.
@@ -35,7 +35,7 @@ final readonly class ChatMember extends AbstractUser
         ?string $lastName,
         ?string $username,
         bool $isBot,
-        int $lastActivityTime,
+        ?int $lastActivityTime,
         public ?string $description,
         public ?string $avatarUrl,
         public ?string $fullAvatarUrl,

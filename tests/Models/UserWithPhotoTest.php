@@ -13,6 +13,23 @@ use PHPUnit\Framework\TestCase;
 final class UserWithPhotoTest extends TestCase
 {
     #[Test]
+    public function optionalFieldsMayBeAbsent(): void
+    {
+        // Since schema 0.0.33 only user_id, first_name and is_bot are required
+        $user = UserWithPhoto::fromArray([
+            'user_id' => 123,
+            'first_name' => 'John',
+            'is_bot' => false,
+        ]);
+
+        $this->assertSame(123, $user->userId);
+        $this->assertNull($user->lastName);
+        $this->assertNull($user->username);
+        $this->assertNull($user->lastActivityTime);
+        $this->assertNull($user->avatarUrl);
+    }
+
+    #[Test]
     public function canBeCreatedFromArray(): void
     {
         $data = [
