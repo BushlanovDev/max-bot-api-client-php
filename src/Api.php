@@ -17,6 +17,8 @@ use BushlanovDev\MaxMessengerBot\Models\Attachments\Requests\AudioAttachmentRequ
 use BushlanovDev\MaxMessengerBot\Models\Attachments\Requests\FileAttachmentRequest;
 use BushlanovDev\MaxMessengerBot\Models\Attachments\Requests\PhotoAttachmentRequest;
 use BushlanovDev\MaxMessengerBot\Models\Attachments\Requests\VideoAttachmentRequest;
+use BushlanovDev\MaxMessengerBot\Models\BotCommand;
+use BushlanovDev\MaxMessengerBot\Models\BotCommandsInfo;
 use BushlanovDev\MaxMessengerBot\Models\BotInfo;
 use BushlanovDev\MaxMessengerBot\Models\BotPatch;
 use BushlanovDev\MaxMessengerBot\Models\Chat;
@@ -61,6 +63,7 @@ class Api
     private const string METHOD_PUT = 'PUT';
 
     private const string ACTION_ME = '/me';
+    private const string ACTION_ME_COMMANDS = '/me/commands';
     private const string ACTION_SUBSCRIPTIONS = '/subscriptions';
     private const string ACTION_MESSAGES = '/messages';
     private const string ACTION_UPLOADS = '/uploads';
@@ -249,6 +252,31 @@ class Api
     {
         return $this->modelFactory->createBotInfo(
             $this->client->request(self::METHOD_GET, self::ACTION_ME)
+        );
+    }
+
+    /**
+     * Edits the bot commands shown to users as hints when they type "/".
+     *
+     * Example: editBotCommands([new BotCommand('start', 'Start the bot'), new BotCommand('help', 'Help')]);
+     *
+     * @param BotCommand[] $commands Up to 32 commands.
+     *
+     * @return BotCommandsInfo
+     * @throws ClientApiException
+     * @throws NetworkException
+     * @throws ReflectionException
+     * @throws SerializationException
+     */
+    public function editBotCommands(array $commands): BotCommandsInfo
+    {
+        return $this->modelFactory->createBotCommandsInfo(
+            $this->client->request(
+                self::METHOD_PATCH,
+                self::ACTION_ME_COMMANDS,
+                [],
+                ['commands' => array_map(static fn(BotCommand $command) => $command->toArray(), $commands)],
+            )
         );
     }
 
@@ -1098,6 +1126,10 @@ class Api
      * Edits the bot info.
      *
      * Example: editBotInfo(new BotPatch(name: 'New Bot Name', description: null));
+     *
+     * @deprecated The API no longer accepts `PATCH /me` and answers "Path /me is not recognized".
+     *             Set commands with editBotCommands(); name, description and photo are edited
+     *             on the MAX partner platform.
      *
      * @param BotPatch $botPatch
      *

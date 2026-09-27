@@ -181,7 +181,8 @@ $handler->handle();
 #### Bots
 
 - [x] `GET /me` (`getBotInfo`) - [*Получение информации о боте.*](./docs/README.md#Получение-информации-о-боте)
-- [x] `PATCH /me` (`editBotInfo`) - [*Редактирование информации о боте.*](./docs/README.md#Редактирование-информации-о-боте)
+- [x] `PATCH /me/commands` (`editBotCommands`) - [*Редактирование команд бота.*](./docs/README.md#Редактирование-команд-бота)
+- [x] ~~`PATCH /me` (`editBotInfo`) - [*Редактирование информации о боте.*](./docs/README.md#Редактирование-информации-о-боте-deprecated)~~ (deprecated)
 
 #### Chats
 
