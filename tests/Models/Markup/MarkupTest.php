@@ -10,6 +10,7 @@ use BushlanovDev\MaxMessengerBot\Models\Markup\HeadingMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\HighlightedMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\LinkMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\MonospacedMarkup;
+use BushlanovDev\MaxMessengerBot\Models\Markup\QuoteMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\StrikethroughMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\StrongMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\UnderlineMarkup;
@@ -27,6 +28,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(EmphasizedMarkup::class)]
 #[CoversClass(HeadingMarkup::class)]
 #[CoversClass(HighlightedMarkup::class)]
+#[CoversClass(QuoteMarkup::class)]
 final class MarkupTest extends TestCase
 {
     #[Test]
@@ -138,6 +140,19 @@ final class MarkupTest extends TestCase
         $this->assertSame(MarkupType::Highlighted, $markup->type);
         $this->assertSame(1, $markup->from);
         $this->assertSame(4, $markup->length);
+        $this->assertEquals($data, $markup->toArray());
+    }
+
+    #[Test]
+    public function quoteMarkupIsCreatedCorrectly(): void
+    {
+        $data = ['type' => 'quote', 'from' => 0, 'length' => 12];
+        $markup = QuoteMarkup::fromArray($data);
+
+        $this->assertInstanceOf(QuoteMarkup::class, $markup);
+        $this->assertSame(MarkupType::Quote, $markup->type);
+        $this->assertSame(0, $markup->from);
+        $this->assertSame(12, $markup->length);
         $this->assertEquals($data, $markup->toArray());
     }
 }

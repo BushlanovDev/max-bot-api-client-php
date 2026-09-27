@@ -13,6 +13,7 @@ use BushlanovDev\MaxMessengerBot\Models\Attachments\Payloads\PhotoAttachmentRequ
  *
  * @property-read PhotoAttachmentRequestPayload|null $icon
  * @property-read string|null $title
+ * @property-read string|null $description Up to 16000 characters; an empty string removes the description.
  * @property-read string|null $pin Message ID to be pinned.
  * @property-read bool|null $notify
  */

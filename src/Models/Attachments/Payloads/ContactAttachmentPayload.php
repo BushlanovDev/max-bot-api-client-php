@@ -15,10 +15,12 @@ final readonly class ContactAttachmentPayload extends AbstractModel
     /**
      * @param string|null $vcfInfo User info in VCF format.
      * @param UserWithPhoto|null $maxInfo User info if the contact is a Max user.
+     * @param string|null $hash Hash of the user info in VCF format.
      */
     public function __construct(
         public ?string $vcfInfo,
         public ?UserWithPhoto $maxInfo,
+        public ?string $hash = null,
     ) {
     }
 }

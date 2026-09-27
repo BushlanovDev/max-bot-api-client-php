@@ -44,6 +44,7 @@ use BushlanovDev\MaxMessengerBot\Models\Markup\HeadingMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\HighlightedMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\LinkMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\MonospacedMarkup;
+use BushlanovDev\MaxMessengerBot\Models\Markup\QuoteMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\StrikethroughMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\StrongMarkup;
 use BushlanovDev\MaxMessengerBot\Models\Markup\UnderlineMarkup;
@@ -506,6 +507,7 @@ readonly class ModelFactory
             MarkupType::Underline => UnderlineMarkup::fromArray($data),
             MarkupType::Heading => HeadingMarkup::fromArray($data),
             MarkupType::Highlighted => HighlightedMarkup::fromArray($data),
+            MarkupType::Quote => QuoteMarkup::fromArray($data),
             MarkupType::Link => LinkMarkup::fromArray($data),
             MarkupType::UserMention => UserMentionMarkup::fromArray($data),
             default => throw new LogicException(

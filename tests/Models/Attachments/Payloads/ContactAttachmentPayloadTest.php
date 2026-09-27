@@ -24,6 +24,6 @@ final class ContactAttachmentPayloadTest extends TestCase
         $payload = new ContactAttachmentPayload('vcf_info_string', $user);
         $this->assertSame('vcf_info_string', $payload->vcfInfo);
         $this->assertSame($user, $payload->maxInfo);
-        $this->assertEquals(['vcf_info' => 'vcf_info_string', 'max_info' => $user->toArray()], $payload->toArray());
+        $this->assertEquals(['vcf_info' => 'vcf_info_string', 'max_info' => $user->toArray(), 'hash' => null], $payload->toArray());
     }
 }

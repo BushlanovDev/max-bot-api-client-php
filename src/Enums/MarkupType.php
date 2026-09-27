@@ -15,4 +15,5 @@ enum MarkupType: string
     case UserMention = 'user_mention';
     case Heading = 'heading';
     case Highlighted = 'highlighted';
+    case Quote = 'quote';
 }
