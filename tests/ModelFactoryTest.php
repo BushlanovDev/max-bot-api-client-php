@@ -784,6 +784,63 @@ final class ModelFactoryTest extends TestCase
     }
 
     #[Test]
+    public function createUpdateTurnsPayloadThatDoesNotFitTheModelIntoLogicException(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringStartsWith('Failed to parse update of type bot_started: '));
+        $factory = new ModelFactory($logger);
+
+        try {
+            // `user` is required by BotStartedUpdate
+            $factory->createUpdate(['update_type' => 'bot_started', 'timestamp' => 1, 'chat_id' => 123]);
+            $this->fail('LogicException expected');
+        } catch (LogicException $e) {
+            $this->assertInstanceOf(\TypeError::class, $e->getPrevious());
+        }
+    }
+
+    #[Test]
+    public function createUpdateListSkipsUpdatesThatDoNotFitTheirModel(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(2))->method('warning');
+        $factory = new ModelFactory($logger);
+
+        $updateList = $factory->createUpdateList([
+            'updates' => [
+                // TypeError: a required field is missing
+                ['update_type' => 'bot_started', 'timestamp' => 1, 'chat_id' => 123],
+                // ValueError: an enum value the library does not know yet
+                [
+                    'update_type' => 'message_created',
+                    'timestamp' => 2,
+                    'message' => [
+                        'timestamp' => 2,
+                        'body' => ['mid' => 'mid.1', 'seq' => 1],
+                        'recipient' => ['chat_type' => 'some_new_chat_type'],
+                    ],
+                ],
+                [
+                    'update_type' => 'message_created',
+                    'timestamp' => 3,
+                    'message' => [
+                        'timestamp' => 3,
+                        'body' => ['mid' => 'mid.2', 'seq' => 2],
+                        'recipient' => ['chat_type' => 'dialog'],
+                    ],
+                ],
+            ],
+            'marker' => 7,
+        ]);
+
+        $this->assertCount(1, $updateList->updates);
+        $this->assertInstanceOf(MessageCreatedUpdate::class, $updateList->updates[0]);
+        $this->assertSame(7, $updateList->marker);
+    }
+
+    #[Test]
     public function createUpdateListCatchesAndLogsLogicException(): void
     {
         $loggerMock = $this->createMock(LoggerInterface::class);
