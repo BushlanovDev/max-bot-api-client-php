@@ -369,14 +369,23 @@ readonly class ModelFactory
     /**
      * Creates a specific Update model based on the 'update_type' field.
      *
-     * @param array<string, mixed> $data Raw data for a single update.
+     * @param mixed $data Raw data for a single update. Anything that is not an array
+     *                    (e.g. a scalar produced by json_decode) is converted to LogicException,
+     *                    so a webhook or a long-polling loop can skip it instead of crashing.
      *
      * @return AbstractUpdate
      * @throws ReflectionException
      * @throws LogicException
      */
-    public function createUpdate(array $data): AbstractUpdate
+    public function createUpdate(mixed $data): AbstractUpdate
     {
+        if (!is_array($data)) {
+            $message = sprintf('Failed to parse update: expected JSON object, got %s', get_debug_type($data));
+            $this->logger->warning($message, ['payload' => $data]);
+
+            throw new LogicException($message);
+        }
+
         try {
             return match (UpdateType::tryFrom($data['update_type'] ?? '')) {
                 UpdateType::MessageCreated => MessageCreatedUpdate::fromArray($data),

@@ -840,6 +840,67 @@ final class ModelFactoryTest extends TestCase
         $this->assertSame(7, $updateList->marker);
     }
 
+    public static function nonArrayPayloadProvider(): array
+    {
+        return [
+            'string' => ['123'],
+            'integer' => [42],
+            'null' => [null],
+            'float' => [3.14],
+            'boolean' => [true],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('nonArrayPayloadProvider')]
+    public function createUpdateTurnsNonArrayPayloadIntoLogicException(mixed $payload): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with(
+                'Failed to parse update: expected JSON object, got ' . get_debug_type($payload),
+                ['payload' => $payload],
+            );
+        $factory = new ModelFactory($logger);
+
+        try {
+            $factory->createUpdate($payload);
+            $this->fail('LogicException expected');
+        } catch (LogicException $e) {
+            $this->assertNull($e->getPrevious());
+        }
+    }
+
+    #[Test]
+    public function createUpdateListSkipsNonArrayElements(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(2))->method('warning');
+        $factory = new ModelFactory($logger);
+
+        $updateList = $factory->createUpdateList([
+            'updates' => [
+                'junk',
+                41,
+                [
+                    'update_type' => 'message_created',
+                    'timestamp' => 3,
+                    'message' => [
+                        'timestamp' => 3,
+                        'body' => ['mid' => 'mid.2', 'seq' => 2],
+                        'recipient' => ['chat_type' => 'dialog'],
+                    ],
+                ],
+            ],
+            'marker' => 9,
+        ]);
+
+        $this->assertCount(1, $updateList->updates);
+        $this->assertInstanceOf(MessageCreatedUpdate::class, $updateList->updates[0]);
+        $this->assertSame(9, $updateList->marker);
+    }
+
     #[Test]
     public function createUpdateListCatchesAndLogsLogicException(): void
     {
