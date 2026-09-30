@@ -75,6 +75,8 @@ use LogicException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use ReflectionException;
+use TypeError;
+use ValueError;
 
 /**
  * Creates DTOs from raw associative arrays returned by the API client.
@@ -375,27 +377,41 @@ readonly class ModelFactory
      */
     public function createUpdate(array $data): AbstractUpdate
     {
-        return match (UpdateType::tryFrom($data['update_type'] ?? '')) {
-            UpdateType::MessageCreated => MessageCreatedUpdate::fromArray($data),
-            UpdateType::MessageCallback => MessageCallbackUpdate::fromArray($data),
-            UpdateType::MessageEdited => MessageEditedUpdate::fromArray($data),
-            UpdateType::MessageRemoved => MessageRemovedUpdate::fromArray($data),
-            UpdateType::BotAdded => BotAddedToChatUpdate::fromArray($data),
-            UpdateType::BotRemoved => BotRemovedFromChatUpdate::fromArray($data),
-            UpdateType::DialogMuted => DialogMutedUpdate::fromArray($data),
-            UpdateType::DialogUnmuted => DialogUnmutedUpdate::fromArray($data),
-            UpdateType::DialogCleared => DialogClearedUpdate::fromArray($data),
-            UpdateType::DialogRemoved => DialogRemovedUpdate::fromArray($data),
-            UpdateType::UserAdded => UserAddedToChatUpdate::fromArray($data),
-            UpdateType::UserRemoved => UserRemovedFromChatUpdate::fromArray($data),
-            UpdateType::BotStarted => BotStartedUpdate::fromArray($data),
-            UpdateType::BotStopped => BotStoppedUpdate::fromArray($data),
-            UpdateType::ChatTitleChanged => ChatTitleChangedUpdate::fromArray($data),
-            UpdateType::MessageChatCreated => MessageChatCreatedUpdate::fromArray($data),
-            default => throw new LogicException(
-                'Unknown or unsupported update type received: ' . ($data['update_type'] ?? 'none')
-            ),
-        };
+        try {
+            return match (UpdateType::tryFrom($data['update_type'] ?? '')) {
+                UpdateType::MessageCreated => MessageCreatedUpdate::fromArray($data),
+                UpdateType::MessageCallback => MessageCallbackUpdate::fromArray($data),
+                UpdateType::MessageEdited => MessageEditedUpdate::fromArray($data),
+                UpdateType::MessageRemoved => MessageRemovedUpdate::fromArray($data),
+                UpdateType::BotAdded => BotAddedToChatUpdate::fromArray($data),
+                UpdateType::BotRemoved => BotRemovedFromChatUpdate::fromArray($data),
+                UpdateType::DialogMuted => DialogMutedUpdate::fromArray($data),
+                UpdateType::DialogUnmuted => DialogUnmutedUpdate::fromArray($data),
+                UpdateType::DialogCleared => DialogClearedUpdate::fromArray($data),
+                UpdateType::DialogRemoved => DialogRemovedUpdate::fromArray($data),
+                UpdateType::UserAdded => UserAddedToChatUpdate::fromArray($data),
+                UpdateType::UserRemoved => UserRemovedFromChatUpdate::fromArray($data),
+                UpdateType::BotStarted => BotStartedUpdate::fromArray($data),
+                UpdateType::BotStopped => BotStoppedUpdate::fromArray($data),
+                UpdateType::ChatTitleChanged => ChatTitleChangedUpdate::fromArray($data),
+                UpdateType::MessageChatCreated => MessageChatCreatedUpdate::fromArray($data),
+                default => throw new LogicException(
+                    'Unknown or unsupported update type received: ' . ($data['update_type'] ?? 'none')
+                ),
+            };
+        } catch (TypeError|ValueError $e) {
+            // The update type is known, but its payload does not fit the model: the API has
+            // changed a field. Skip it like an unsupported update, so a webhook or a long-polling
+            // loop does not stop on it, but log it louder.
+            $message = sprintf(
+                'Failed to parse update of type %s: %s',
+                is_string($data['update_type'] ?? null) ? $data['update_type'] : 'none',
+                $e->getMessage(),
+            );
+            $this->logger->warning($message, ['payload' => $data, 'exception' => $e]);
+
+            throw new LogicException($message, 0, $e);
+        }
     }
 
     /**

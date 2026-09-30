@@ -40,6 +40,7 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(Recipient::class)]
 #[UsesClass(AbstractUpdate::class)]
 #[UsesClass(MessageCreatedUpdate::class)]
+#[UsesClass(ModelFactory::class)]
 final class WebhookHandlerTest extends TestCase
 {
     use PHPMock;
@@ -225,5 +226,27 @@ final class WebhookHandlerTest extends TestCase
         $handler = new WebhookHandler($this->dispatcher, $this->modelFactoryMock, $this->loggerMock, self::SECRET);
 
         $handler->handle($request);
+    }
+
+    #[Test]
+    public function handleSkipsUpdateThatDoesNotFitItsModel(): void
+    {
+        // `user` is required by BotStartedUpdate: before, the TypeError escaped the handler
+        $payload = '{"update_type":"bot_started","timestamp":123,"chat_id":1}';
+        $request = $this->createMockRequest($payload, self::SECRET);
+
+        $this->loggerMock->expects($this->once())
+            ->method('warning')
+            ->with($this->stringStartsWith('Failed to parse update of type bot_started: '));
+
+        $handlerWasCalled = false;
+        $this->dispatcher->addHandler(UpdateType::BotStarted, function () use (&$handlerWasCalled) {
+            $handlerWasCalled = true;
+        });
+
+        $handler = new WebhookHandler($this->dispatcher, new ModelFactory($this->loggerMock), $this->loggerMock, self::SECRET);
+        $handler->handle($request);
+
+        $this->assertFalse($handlerWasCalled);
     }
 }
