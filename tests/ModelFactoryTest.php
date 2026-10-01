@@ -27,6 +27,7 @@ use BushlanovDev\MaxMessengerBot\Models\Attachments\Payloads\ShareAttachmentRequ
 use BushlanovDev\MaxMessengerBot\Models\Attachments\PhotoAttachment;
 use BushlanovDev\MaxMessengerBot\Models\Attachments\ShareAttachment;
 use BushlanovDev\MaxMessengerBot\Models\BotCommand;
+use BushlanovDev\MaxMessengerBot\Models\BotCommandsInfo;
 use BushlanovDev\MaxMessengerBot\Models\BotInfo;
 use BushlanovDev\MaxMessengerBot\Models\Chat;
 use BushlanovDev\MaxMessengerBot\Models\ChatList;
@@ -61,6 +62,7 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(ModelFactory::class)]
 #[UsesClass(BotInfo::class)]
 #[UsesClass(BotCommand::class)]
+#[UsesClass(BotCommandsInfo::class)]
 #[UsesClass(Result::class)]
 #[UsesClass(Subscription::class)]
 #[UsesClass(ArrayOf::class)]
@@ -169,6 +171,23 @@ final class ModelFactoryTest extends TestCase
         $this->assertSame('start', $botInfo->commands[0]->name);
         $this->assertInstanceOf(BotCommand::class, $botInfo->commands[1]);
         $this->assertSame('help', $botInfo->commands[1]->name);
+    }
+
+    #[Test]
+    public function createBotCommandsInfoHydratesCommands(): void
+    {
+        $botCommands = $this->factory->createBotCommandsInfo([
+            'commands' => [
+                ['name' => 'start', 'description' => 'Start the bot'],
+                ['name' => 'help', 'description' => null],
+            ],
+        ]);
+
+        $this->assertInstanceOf(BotCommandsInfo::class, $botCommands);
+        $this->assertCount(2, $botCommands->commands);
+        $this->assertInstanceOf(BotCommand::class, $botCommands->commands[0]);
+        $this->assertSame('start', $botCommands->commands[0]->name);
+        $this->assertNull($botCommands->commands[1]->description);
     }
 
     #[Test]

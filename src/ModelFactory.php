@@ -32,6 +32,7 @@ use BushlanovDev\MaxMessengerBot\Models\Attachments\PhotoAttachment;
 use BushlanovDev\MaxMessengerBot\Models\Attachments\ShareAttachment;
 use BushlanovDev\MaxMessengerBot\Models\Attachments\StickerAttachment;
 use BushlanovDev\MaxMessengerBot\Models\Attachments\VideoAttachment;
+use BushlanovDev\MaxMessengerBot\Models\BotCommandsInfo;
 use BushlanovDev\MaxMessengerBot\Models\BotInfo;
 use BushlanovDev\MaxMessengerBot\Models\Chat;
 use BushlanovDev\MaxMessengerBot\Models\ChatList;
@@ -104,6 +105,19 @@ readonly class ModelFactory
     public function createResult(array $data): Result
     {
         return Result::fromArray($data);
+    }
+
+    /**
+     * Commands of the current bot.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return BotCommandsInfo
+     * @throws ReflectionException
+     */
+    public function createBotCommandsInfo(array $data): BotCommandsInfo
+    {
+        return BotCommandsInfo::fromArray($data);
     }
 
     /**

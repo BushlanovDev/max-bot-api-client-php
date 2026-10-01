@@ -35,6 +35,8 @@ use BushlanovDev\MaxMessengerBot\Models\Attachments\Requests\PhotoAttachmentRequ
 use BushlanovDev\MaxMessengerBot\Models\Attachments\Requests\ShareAttachmentRequest;
 use BushlanovDev\MaxMessengerBot\Models\Attachments\Requests\StickerAttachmentRequest;
 use BushlanovDev\MaxMessengerBot\Models\Attachments\Requests\VideoAttachmentRequest;
+use BushlanovDev\MaxMessengerBot\Models\BotCommand;
+use BushlanovDev\MaxMessengerBot\Models\BotCommandsInfo;
 use BushlanovDev\MaxMessengerBot\Models\BotInfo;
 use BushlanovDev\MaxMessengerBot\Models\BotPatch;
 use BushlanovDev\MaxMessengerBot\Models\Chat;
@@ -116,6 +118,8 @@ use RuntimeException;
 #[UsesClass(ChatMembersList::class)]
 #[UsesClass(ChatAdmin::class)]
 #[UsesClass(BotPatch::class)]
+#[UsesClass(BotCommand::class)]
+#[UsesClass(BotCommandsInfo::class)]
 #[UsesClass(ChatPatch::class)]
 #[UsesClass(VideoAttachmentDetails::class)]
 #[UsesClass(VideoUrls::class)]
@@ -1881,6 +1885,58 @@ final class ApiTest extends TestCase
 
         $result = $this->api->editMessage($messageId, attachments: []);
         $this->assertSame($expectedResult, $result);
+    }
+
+    #[Test]
+    public function editBotCommandsSendsCommandsToDedicatedEndpoint(): void
+    {
+        $rawResponseData = [
+            'commands' => [
+                ['name' => 'start', 'description' => 'Start the bot'],
+                ['name' => 'help', 'description' => null],
+            ],
+        ];
+        $expectedResult = new BotCommandsInfo([
+            new BotCommand('start', 'Start the bot'),
+            new BotCommand('help', null),
+        ]);
+
+        $this->clientMock
+            ->expects($this->once())
+            ->method('request')
+            ->with('PATCH', '/me/commands', [], $rawResponseData)
+            ->willReturn($rawResponseData);
+
+        $this->modelFactoryMock
+            ->expects($this->once())
+            ->method('createBotCommandsInfo')
+            ->with($rawResponseData)
+            ->willReturn($expectedResult);
+
+        $result = $this->api->editBotCommands([
+            new BotCommand('start', 'Start the bot'),
+            new BotCommand('help', null),
+        ]);
+
+        $this->assertSame($expectedResult, $result);
+    }
+
+    #[Test]
+    public function editBotCommandsSendsAnEmptyList(): void
+    {
+        $this->clientMock
+            ->expects($this->once())
+            ->method('request')
+            ->with('PATCH', '/me/commands', [], ['commands' => []])
+            ->willReturn(['commands' => []]);
+
+        $this->modelFactoryMock
+            ->expects($this->once())
+            ->method('createBotCommandsInfo')
+            ->with(['commands' => []])
+            ->willReturn(new BotCommandsInfo([]));
+
+        $this->api->editBotCommands([]);
     }
 
     #[Test]
