@@ -9,6 +9,8 @@ use BushlanovDev\MaxMessengerBot\Enums\InlineButtonType;
 /**
  * Button that creates a new chat associated with the message.
  * The bot will be added as an administrator by default.
+ *
+ * @deprecated Not part of the Bot API schema since 0.0.33.
  */
 final readonly class ChatButton extends AbstractInlineButton
 {

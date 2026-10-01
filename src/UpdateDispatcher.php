@@ -284,6 +284,8 @@ final class UpdateDispatcher
     /**
      * A convenient alias for addHandler(UpdateType::MessageChatCreated, $handler).
      *
+     * @deprecated message_chat_created is not in the Bot API schema since 0.0.33.
+     *
      * @param callable(Models\Updates\MessageChatCreatedUpdate, Api): void $handler
      *
      * @return $this
@@ -292,5 +294,57 @@ final class UpdateDispatcher
     public function onMessageChatCreated(callable $handler): self
     {
         return $this->addHandler(UpdateType::MessageChatCreated, $handler);
+    }
+
+    /**
+     * A convenient alias for addHandler(UpdateType::CommentCreated, $handler).
+     *
+     * @param callable(Models\Updates\CommentCreatedUpdate, Api): void $handler
+     *
+     * @return $this
+     * @codeCoverageIgnore
+     */
+    public function onCommentCreated(callable $handler): self
+    {
+        return $this->addHandler(UpdateType::CommentCreated, $handler);
+    }
+
+    /**
+     * A convenient alias for addHandler(UpdateType::CommentEdited, $handler).
+     *
+     * @param callable(Models\Updates\CommentEditedUpdate, Api): void $handler
+     *
+     * @return $this
+     * @codeCoverageIgnore
+     */
+    public function onCommentEdited(callable $handler): self
+    {
+        return $this->addHandler(UpdateType::CommentEdited, $handler);
+    }
+
+    /**
+     * A convenient alias for addHandler(UpdateType::CommentRemoved, $handler).
+     *
+     * @param callable(Models\Updates\CommentRemovedUpdate, Api): void $handler
+     *
+     * @return $this
+     * @codeCoverageIgnore
+     */
+    public function onCommentRemoved(callable $handler): self
+    {
+        return $this->addHandler(UpdateType::CommentRemoved, $handler);
+    }
+
+    /**
+     * A convenient alias for addHandler(UpdateType::BotAdminPermissionChanged, $handler).
+     *
+     * @param callable(Models\Updates\BotAdminPermissionsChangedUpdate, Api): void $handler
+     *
+     * @return $this
+     * @codeCoverageIgnore
+     */
+    public function onBotAdminPermissionsChanged(callable $handler): self
+    {
+        return $this->addHandler(UpdateType::BotAdminPermissionChanged, $handler);
     }
 }

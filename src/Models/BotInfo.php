@@ -17,7 +17,7 @@ final readonly class BotInfo extends AbstractUser
      * @param string|null $lastName User's display last name.
      * @param string|null $username Unique public name of the user, may be null if the user is not available or no name is set.
      * @param bool $isBot Is the user a bot.
-     * @param int $lastActivityTime User last activity time in MAX (Unix time in milliseconds). May be irrelevant if the user has disabled the "online" status in the settings.
+     * @param int|null $lastActivityTime User last activity time in MAX (Unix time in milliseconds). May be irrelevant if the user has disabled the "online" status in the settings.
      * @param string|null $description User description, may be null if the user has not filled it in (up to 16000 characters).
      * @param string|null $avatarUrl Avatar URL.
      * @param string|null $fullAvatarUrl Larger Avatar URL.
@@ -29,7 +29,7 @@ final readonly class BotInfo extends AbstractUser
         ?string $lastName,
         ?string $username,
         bool $isBot,
-        int $lastActivityTime,
+        ?int $lastActivityTime,
         public ?string $description,
         public ?string $avatarUrl,
         public ?string $fullAvatarUrl,

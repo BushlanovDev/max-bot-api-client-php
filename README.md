@@ -187,10 +187,10 @@ $handler->handle();
 #### Chats
 
 - [x] ~~`GET /chats` (`getChats`) - [*Получение списка всех чатов бота.*](./docs/README.md#Получение-списка-всех-чатов-бота-deprecated)~~ (deprecated)
-- [x] `GET /chats/{chatLink}` (`getChatByLink`) - [*Получение информации о чате по ссылке.*](./docs/README.md#Получение-информации-о-чате-по-ссылке)
+- [x] ~~`GET /chats/{chatLink}` (`getChatByLink`) - [*Получение информации о чате по ссылке.*](./docs/README.md#Получение-информации-о-чате-по-ссылке-deprecated)~~ (deprecated)
 - [x] `GET /chats/{chatId}` (`getChat`) - [*Получение информации о чате по ID.*](./docs/README.md#Получение-информации-о-чате-по-ID)
 - [x] `PATCH /chats/{chatId}` (`editChat`) - [*Редактирование информации о чате.*](./docs/README.md#Редактирование-информации-о-чате)
-- [x] `DELETE /chats/{chatId}` (`deleteChat`) - [*Удаление чата.*](./docs/README.md#Удаление-чата)
+- [x] ~~`DELETE /chats/{chatId}` (`deleteChat`) - [*Удаление чата.*](./docs/README.md#Удаление-чата-deprecated)~~ (deprecated)
 - [x] `POST /chats/{chatId}/actions` (`sendAction`) - [*Отправка действия в чат (например, "печатает...").*](./docs/README.md#Отправка-действия-в-чат)
 - [x] `GET /chats/{chatId}/pin` (`getPinnedMessage`) - [*Получение закрепленного сообщения.*](./docs/README.md#Получение-закрепленного-сообщения)
 - [x] `PUT /chats/{chatId}/pin` (`pinMessage`) - [*Закрепление сообщения.*](./docs/README.md#Закрепление-сообщения)
@@ -201,7 +201,7 @@ $handler->handle();
 - [x] `POST /chats/{chatId}/members/admins` (`addAdmins`) - [*Назначение администраторов чата.*](./docs/README.md#Назначение-администраторов-чата)
 - [x] `DELETE /chats/{chatId}/members/admins/{userId}` (`deleteAdmin`) - [*Снятие прав администратора.*](./docs/README.md#Снятие-прав-администратора)
 - [x] `GET /chats/{chatId}/members` (`getMembers`) - [*Получение участников чата.*](./docs/README.md#Получение-участников-чата)
-- [x] `POST /chats/{chatId}/members` (`addMembers`) - [*Добавление участников в чат.*](./docs/README.md#Добавление-участников-в-чат)
+- [x] ~~`POST /chats/{chatId}/members` (`addMembers`) - [*Добавление участников в чат.*](./docs/README.md#Добавление-участников-в-чат-deprecated)~~ (deprecated, удаляется 30.09.2026)
 - [x] `DELETE /chats/{chatId}/members` (`deleteMember`) - [*Удаление участника из чата.*](./docs/README.md#Удаление-участника-из-чата)
 
 #### Subscriptions
@@ -224,6 +224,14 @@ $handler->handle();
 - [x] `GET /messages/{messageId}` (`getMessageById`) - [*Получение сообщения по ID.*](./docs/README.md#Получение-сообщения-по-ID)
 - [x] `GET /videos/{videoToken}` (`getVideoAttachmentDetails`) - [*Получение детальной информации о видео.*](./docs/README.md#Получение-детальной-информации-о-видео)
 - [x] `POST /answers` (`answerOnCallback`) - [*Ответ на нажатие callback-кнопки.*](./docs/README.md#Ответ-на-нажатие-callback-кнопки)
+
+#### Comments
+
+- [x] `GET /messages/{messageId}/comments` (`getComments`) - [*Получение комментариев к посту.*](./docs/README.md#Получение-комментариев-к-посту)
+- [x] `GET /messages/{messageId}/comments/{commentId}` (`getCommentById`) - [*Получение комментария по ID.*](./docs/README.md#Получение-комментария-по-ID)
+- [x] `POST /messages/{messageId}/comments` (`sendComment`) - [*Отправка комментария.*](./docs/README.md#Отправка-комментария)
+- [x] `PUT /messages/{messageId}/comments` (`editComment`) - [*Редактирование комментария.*](./docs/README.md#Редактирование-комментария)
+- [x] `DELETE /messages/{messageId}/comments` (`deleteComment`) - [*Удаление комментария.*](./docs/README.md#Удаление-комментария)
 
 ## Лицензия
 

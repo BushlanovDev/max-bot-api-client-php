@@ -32,6 +32,7 @@ final class MessageTest extends TestCase
                 'chat_type' => 'dialog',
                 'user_id' => 123,
                 'chat_id' => null,
+                'post_id' => null,
             ],
             'body' => [
                 'mid' => 'mid.456.xyz',

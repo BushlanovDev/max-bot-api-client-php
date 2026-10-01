@@ -27,6 +27,7 @@ use BushlanovDev\MaxMessengerBot\Models\ChatList;
 use BushlanovDev\MaxMessengerBot\Models\ChatMember;
 use BushlanovDev\MaxMessengerBot\Models\ChatMembersList;
 use BushlanovDev\MaxMessengerBot\Models\ChatPatch;
+use BushlanovDev\MaxMessengerBot\Models\CommentMessage;
 use BushlanovDev\MaxMessengerBot\Models\Message;
 use BushlanovDev\MaxMessengerBot\Models\MessageLink;
 use BushlanovDev\MaxMessengerBot\Models\Result;
@@ -77,6 +78,8 @@ class Api
     private const string ACTION_UPDATES = '/updates';
     private const string ACTION_ANSWERS = '/answers';
     private const string ACTION_VIDEO_DETAILS = '/videos/%s';
+    private const string ACTION_MESSAGE_COMMENTS = '/messages/%s/comments';
+    private const string ACTION_MESSAGE_COMMENT = '/messages/%s/comments/%s';
 
     private const int RESUMABLE_UPLOAD_THRESHOLD_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -602,6 +605,8 @@ class Api
      *
      * @param string $chatLink Public chat link (e.g., '@mychannel') or username (e.g., '@john_doe').
      *
+     * @deprecated `GET /chats/{chatLink}` is not in the Bot API docs and schema since 0.0.33.
+     *
      * @return Chat
      * @throws ClientApiException
      * @throws NetworkException
@@ -623,6 +628,9 @@ class Api
      *
      * @param int|null $count Number of chats requested (1-100, default 50).
      * @param int|null $marker Points to the next data page. Use null for the first page.
+     *
+     * @deprecated The API does not support `GET /chats` since June 2026. Collect chat ids
+     *             from bot_added and bot_started updates instead.
      *
      * @return ChatList
      * @throws ClientApiException
@@ -650,6 +658,8 @@ class Api
      * Deletes a chat for all participants. The bot must have appropriate permissions.
      *
      * @param int $chatId Chat identifier to delete.
+     *
+     * @deprecated `DELETE /chats/{chatId}` is not in the Bot API docs and schema since 0.0.33.
      *
      * @return Result
      * @throws ClientApiException
@@ -862,6 +872,153 @@ class Api
     }
 
     /**
+     * Returns comments to a post in a channel. Comments are traversed in reverse order, the latest first.
+     *
+     * @param string $messageId Identifier (`mid`) of the commented post.
+     * @param string[]|null $commentIds Identifiers of the comments to get.
+     * @param int|null $before Comments before this Unix timestamp (ms).
+     * @param int|null $after Comments after this Unix timestamp (ms).
+     * @param int|null $count Maximum amount of comments in the response (1-100, default 50).
+     *
+     * @return CommentMessage[]
+     * @throws ClientApiException
+     * @throws NetworkException
+     * @throws ReflectionException
+     * @throws SerializationException
+     */
+    public function getComments(
+        string $messageId,
+        ?array $commentIds = null,
+        ?int $before = null,
+        ?int $after = null,
+        ?int $count = null,
+    ): array {
+        $query = [
+            'comment_ids' => $commentIds !== null ? implode(',', $commentIds) : null,
+            'before' => $before,
+            'after' => $after,
+            'count' => $count,
+        ];
+
+        $response = $this->client->request(
+            self::METHOD_GET,
+            sprintf(self::ACTION_MESSAGE_COMMENTS, $messageId),
+            array_filter($query, fn($value) => $value !== null),
+        );
+
+        return $this->modelFactory->createCommentMessages($response);
+    }
+
+    /**
+     * Returns a single comment to a post in a channel.
+     *
+     * @param string $messageId Identifier (`mid`) of the commented post.
+     * @param string $commentId Identifier (`mid`) of the comment.
+     *
+     * @return CommentMessage
+     * @throws ClientApiException
+     * @throws NetworkException
+     * @throws ReflectionException
+     * @throws SerializationException
+     */
+    public function getCommentById(string $messageId, string $commentId): CommentMessage
+    {
+        return $this->modelFactory->createCommentMessage(
+            $this->client->request(
+                self::METHOD_GET,
+                sprintf(self::ACTION_MESSAGE_COMMENT, $messageId, $commentId),
+            )
+        );
+    }
+
+    /**
+     * Sends a comment to a post in a channel. Comments cannot have attachments.
+     *
+     * @param string $messageId Identifier (`mid`) of the commented post.
+     * @param string|null $text Comment text.
+     * @param MessageFormat|null $format Comment format.
+     * @param MessageLink|null $link Link to a comment to reply to or forward.
+     * @param bool $disableLinkPreview If false, server will not generate media preview for links in text.
+     *
+     * @return CommentMessage
+     * @throws ClientApiException
+     * @throws NetworkException
+     * @throws ReflectionException
+     * @throws SerializationException
+     */
+    public function sendComment(
+        string $messageId,
+        ?string $text = null,
+        ?MessageFormat $format = null,
+        ?MessageLink $link = null,
+        bool $disableLinkPreview = false,
+    ): CommentMessage {
+        return $this->modelFactory->createCommentMessageFromSendResponse(
+            $this->client->request(
+                self::METHOD_POST,
+                sprintf(self::ACTION_MESSAGE_COMMENTS, $messageId),
+                ['disable_link_preview' => $disableLinkPreview],
+                $this->buildNewCommentBody($text, $format, $link),
+            )
+        );
+    }
+
+    /**
+     * Edits a comment to a post in a channel. Comments cannot have attachments.
+     *
+     * @param string $messageId Identifier (`mid`) of the commented post.
+     * @param string $commentId Identifier (`mid`) of the comment to edit.
+     * @param string|null $text New comment text.
+     * @param MessageFormat|null $format Formatting for the new text.
+     * @param MessageLink|null $link New link for the edited comment.
+     *
+     * @return Result
+     * @throws ClientApiException
+     * @throws NetworkException
+     * @throws ReflectionException
+     * @throws SerializationException
+     */
+    public function editComment(
+        string $messageId,
+        string $commentId,
+        ?string $text = null,
+        ?MessageFormat $format = null,
+        ?MessageLink $link = null,
+    ): Result {
+        return $this->modelFactory->createResult(
+            $this->client->request(
+                self::METHOD_PUT,
+                sprintf(self::ACTION_MESSAGE_COMMENTS, $messageId),
+                ['comment_id' => $commentId],
+                $this->buildNewCommentBody($text, $format, $link),
+            )
+        );
+    }
+
+    /**
+     * Deletes a comment to a post in a channel if the bot has permission to delete messages.
+     *
+     * @param string $messageId Identifier (`mid`) of the commented post.
+     * @param string $commentId Identifier (`mid`) of the comment to delete.
+     *
+     * @return Result
+     * @throws ClientApiException
+     * @throws NetworkException
+     * @throws ReflectionException
+     * @throws SerializationException
+     */
+    public function deleteComment(string $messageId, string $commentId): Result
+    {
+        return $this->modelFactory->createResult(
+            $this->client->request(
+                self::METHOD_DELETE,
+                sprintf(self::ACTION_MESSAGE_COMMENTS, $messageId),
+                ['comment_id' => $commentId],
+            )
+        );
+    }
+
+    /**
      * Pins a message in a chat or channel.
      *
      * @param int $chatId Chat identifier where the message should be pinned.
@@ -1026,6 +1183,9 @@ class Api
      * @param int $chatId The identifier of the chat.
      * @param int[] $userIds An array of user identifiers to add to the chat.
      *
+     * @deprecated `POST /chats/{chatId}/members` is limited since 9 September 2026 and removed
+     *             on 30 September 2026; the API offers no replacement.
+     *
      * @return Result
      * @throws ClientApiException
      * @throws NetworkException
@@ -1054,6 +1214,7 @@ class Api
      * @param MessageLink|null $link New link for the edited message.
      * @param MessageFormat|null $format Formatting for the new message text.
      * @param bool $notify Notification setting for the edited message.
+     * @param bool $disableLinkPreview If true, server will not generate media preview for links in the updated text.
      *
      * @return Result
      * @throws ClientApiException
@@ -1069,6 +1230,7 @@ class Api
         ?MessageLink $link = null,
         ?MessageFormat $format = null,
         bool $notify = true,
+        bool $disableLinkPreview = false,
     ): Result {
         $answerBody = ['notification' => $notification];
         if ($text !== null || $attachments !== null || $link !== null) {
@@ -1079,7 +1241,7 @@ class Api
             $this->client->request(
                 self::METHOD_POST,
                 self::ACTION_ANSWERS,
-                ['callback_id' => $callbackId],
+                ['callback_id' => $callbackId] + ($disableLinkPreview ? ['disable_link_preview' => true] : []),
                 array_filter($answerBody, fn($value) => $value !== null)
             )
         );
@@ -1229,6 +1391,27 @@ class Api
                 fn(AbstractModel $attachment) => $attachment->toArray(),
                 $attachments,
             ) : null,
+        ];
+
+        return array_filter($body, fn($item) => $item !== null);
+    }
+
+    /**
+     * A helper to build the 'NewCommentBody' array structure: like 'NewMessageBody',
+     * but without attachments and notify.
+     *
+     * @param string|null $text
+     * @param MessageFormat|null $format
+     * @param MessageLink|null $link
+     *
+     * @return array<string, mixed>
+     */
+    private function buildNewCommentBody(?string $text, ?MessageFormat $format, ?MessageLink $link): array
+    {
+        $body = [
+            'text' => $text,
+            'format' => $format?->value,
+            'link' => $link,
         ];
 
         return array_filter($body, fn($item) => $item !== null);

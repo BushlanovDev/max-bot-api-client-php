@@ -24,5 +24,17 @@ final class ContactAttachmentTest extends TestCase
         $attachment = ContactAttachment::fromArray($data);
         $this->assertInstanceOf(ContactAttachment::class, $attachment);
         $this->assertSame('vcf', $attachment->payload->vcfInfo);
+        $this->assertNull($attachment->payload->hash);
+    }
+
+    #[Test]
+    public function payloadCarriesTheVcfHash(): void
+    {
+        $attachment = ContactAttachment::fromArray([
+            'type' => 'contact',
+            'payload' => ['vcf_info' => 'vcf', 'max_info' => null, 'hash' => 'abc123'],
+        ]);
+
+        $this->assertSame('abc123', $attachment->payload->hash);
     }
 }

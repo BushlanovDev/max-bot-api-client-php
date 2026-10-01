@@ -29,6 +29,10 @@ use BushlanovDev\MaxMessengerBot\Models\Attachments\ShareAttachment;
 use BushlanovDev\MaxMessengerBot\Models\BotCommand;
 use BushlanovDev\MaxMessengerBot\Models\BotCommandsInfo;
 use BushlanovDev\MaxMessengerBot\Models\BotInfo;
+use BushlanovDev\MaxMessengerBot\Models\Markup\QuoteMarkup;
+use BushlanovDev\MaxMessengerBot\Models\CommentLinkedMessage;
+use BushlanovDev\MaxMessengerBot\Models\CommentMessage;
+use BushlanovDev\MaxMessengerBot\Models\CommentMessageBody;
 use BushlanovDev\MaxMessengerBot\Models\Chat;
 use BushlanovDev\MaxMessengerBot\Models\ChatList;
 use BushlanovDev\MaxMessengerBot\Models\ChatMember;
@@ -43,8 +47,12 @@ use BushlanovDev\MaxMessengerBot\Models\Recipient;
 use BushlanovDev\MaxMessengerBot\Models\Result;
 use BushlanovDev\MaxMessengerBot\Models\Subscription;
 use BushlanovDev\MaxMessengerBot\Models\UpdateList;
+use BushlanovDev\MaxMessengerBot\Models\Updates\BotAdminPermissionsChangedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\BotStartedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\ChatTitleChangedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\CommentCreatedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\CommentEditedUpdate;
+use BushlanovDev\MaxMessengerBot\Models\Updates\CommentRemovedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\MessageChatCreatedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\Updates\MessageCreatedUpdate;
 use BushlanovDev\MaxMessengerBot\Models\UploadEndpoint;
@@ -63,6 +71,10 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(BotInfo::class)]
 #[UsesClass(BotCommand::class)]
 #[UsesClass(BotCommandsInfo::class)]
+#[UsesClass(CommentMessage::class)]
+#[UsesClass(CommentMessageBody::class)]
+#[UsesClass(CommentLinkedMessage::class)]
+#[UsesClass(QuoteMarkup::class)]
 #[UsesClass(Result::class)]
 #[UsesClass(Subscription::class)]
 #[UsesClass(ArrayOf::class)]
@@ -104,6 +116,10 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(LocationAttachment::class)]
 #[UsesClass(InlineKeyboardAttachment::class)]
 #[UsesClass(KeyboardPayload::class)]
+#[UsesClass(CommentCreatedUpdate::class)]
+#[UsesClass(CommentEditedUpdate::class)]
+#[UsesClass(CommentRemovedUpdate::class)]
+#[UsesClass(BotAdminPermissionsChangedUpdate::class)]
 final class ModelFactoryTest extends TestCase
 {
     private ModelFactory $factory;
@@ -188,6 +204,58 @@ final class ModelFactoryTest extends TestCase
         $this->assertInstanceOf(BotCommand::class, $botCommands->commands[0]);
         $this->assertSame('start', $botCommands->commands[0]->name);
         $this->assertNull($botCommands->commands[1]->description);
+    }
+
+    #[Test]
+    public function createCommentMessageHydratesBodyMarkupAndLink(): void
+    {
+        $comment = $this->factory->createCommentMessage([
+            'timestamp' => 1,
+            'recipient' => ['chat_type' => 'channel', 'chat_id' => -100, 'post_id' => 'mid.post'],
+            'body' => [
+                'mid' => 'mid.comment',
+                'seq' => 3,
+                'text' => 'Quoted reply',
+                'markup' => [['type' => 'quote', 'from' => 0, 'length' => 6]],
+            ],
+            'sender' => ['user_id' => 42, 'first_name' => 'Anna', 'is_bot' => false],
+            'link' => [
+                'type' => 'reply',
+                'message' => [
+                    'mid' => 'mid.parent',
+                    'seq' => 2,
+                    'text' => 'Parent',
+                    'markup' => [['type' => 'strong', 'from' => 0, 'length' => 6]],
+                ],
+            ],
+        ]);
+
+        $this->assertInstanceOf(CommentMessage::class, $comment);
+        $this->assertSame('mid.post', $comment->recipient->postId);
+        $this->assertSame('Quoted reply', $comment->body->text);
+        $this->assertInstanceOf(QuoteMarkup::class, $comment->body->markup[0]);
+        $this->assertSame(42, $comment->sender?->userId);
+        $this->assertInstanceOf(CommentLinkedMessage::class, $comment->link);
+        $this->assertInstanceOf(StrongMarkup::class, $comment->link->message->markup[0]);
+        $this->assertNull($comment->stat);
+    }
+
+    #[Test]
+    public function createCommentMessagesAndSendResponseUnwrapComments(): void
+    {
+        $data = [
+            'timestamp' => 1,
+            'recipient' => ['chat_type' => 'channel', 'chat_id' => -100],
+            'body' => ['mid' => 'mid.comment', 'seq' => 1],
+        ];
+
+        $list = $this->factory->createCommentMessages(['messages' => [$data, $data]]);
+        $sent = $this->factory->createCommentMessageFromSendResponse(['message' => $data]);
+
+        $this->assertCount(2, $list);
+        $this->assertContainsOnlyInstancesOf(CommentMessage::class, $list);
+        $this->assertSame([], $this->factory->createCommentMessages([]));
+        $this->assertSame('mid.comment', $sent->body->mid);
     }
 
     #[Test]
@@ -346,6 +414,45 @@ final class ModelFactoryTest extends TestCase
         $this->assertInstanceOf(Chat::class, $chat);
         $this->assertInstanceOf(Image::class, $chat->icon);
         $this->assertInstanceOf(UserWithPhoto::class, $chat->dialogWithUser);
+    }
+
+    #[Test]
+    public function createUpdateHandlesCommentAndBotPermissionUpdates(): void
+    {
+        $comment = [
+            'timestamp' => 1,
+            'body' => ['mid' => 'mid.comment', 'seq' => 1, 'text' => 'Nice post'],
+            'recipient' => ['chat_type' => 'channel', 'chat_id' => -100, 'post_id' => 'mid.post'],
+        ];
+
+        $created = $this->factory->createUpdate(['update_type' => 'comment_created', 'timestamp' => 1, 'message' => $comment]);
+        $edited = $this->factory->createUpdate(['update_type' => 'comment_edited', 'timestamp' => 2, 'message' => $comment]);
+        $removed = $this->factory->createUpdate([
+            'update_type' => 'comment_removed',
+            'timestamp' => 3,
+            'message_id' => 'mid.comment',
+            'chat_id' => -100,
+            'user_id' => 42,
+            'post_id' => 'mid.post',
+        ]);
+        $permissions = $this->factory->createUpdate([
+            'update_type' => 'bot_admin_permissions_changed',
+            'timestamp' => 4,
+            'chat_id' => -100,
+            'user_id' => 42,
+            'bot_id' => 7,
+            'is_channel' => true,
+            'is_admin' => true,
+            'permissions' => ['read_all_messages', 'write'],
+        ]);
+
+        $this->assertInstanceOf(CommentCreatedUpdate::class, $created);
+        $this->assertSame('Nice post', $created->message->body?->text);
+        $this->assertInstanceOf(CommentEditedUpdate::class, $edited);
+        $this->assertInstanceOf(CommentRemovedUpdate::class, $removed);
+        $this->assertSame('mid.post', $removed->postId);
+        $this->assertInstanceOf(BotAdminPermissionsChangedUpdate::class, $permissions);
+        $this->assertSame([ChatAdminPermission::ReadAllMessages, ChatAdminPermission::Write], $permissions->permissions);
     }
 
     #[Test]
