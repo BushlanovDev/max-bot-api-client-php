@@ -966,6 +966,51 @@ final class ModelFactoryTest extends TestCase
         $this->assertSame(7, $updateList->marker);
     }
 
+    #[Test]
+    public function createUpdateListSkipsCommentAndBotPermissionUpdatesThatDoNotFit(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(4))->method('warning');
+        $factory = new ModelFactory($logger);
+
+        $updateList = $factory->createUpdateList([
+            'updates' => [
+                // TypeError: required `message` is missing
+                ['update_type' => 'comment_created', 'timestamp' => 1],
+                // TypeError: required `message` is missing
+                ['update_type' => 'comment_edited', 'timestamp' => 2],
+                // TypeError: required `chat_id` is missing
+                ['update_type' => 'comment_removed', 'timestamp' => 3, 'message_id' => 'mid.c'],
+                // ValueError: unknown permission value
+                [
+                    'update_type' => 'bot_admin_permissions_changed',
+                    'timestamp' => 4,
+                    'chat_id' => -100,
+                    'user_id' => 50,
+                    'bot_id' => 999,
+                    'is_channel' => true,
+                    'is_admin' => true,
+                    'permissions' => ['not_a_permission'],
+                ],
+                // valid comment_removed survives
+                [
+                    'update_type' => 'comment_removed',
+                    'timestamp' => 5,
+                    'message_id' => 'mid.ok',
+                    'chat_id' => -100,
+                    'user_id' => 50,
+                    'post_id' => 'mid.post',
+                ],
+            ],
+            'marker' => 9,
+        ]);
+
+        $this->assertCount(1, $updateList->updates);
+        $this->assertInstanceOf(CommentRemovedUpdate::class, $updateList->updates[0]);
+        $this->assertSame('mid.ok', $updateList->updates[0]->messageId);
+        $this->assertSame(9, $updateList->marker);
+    }
+
     public static function nonArrayPayloadProvider(): array
     {
         return [

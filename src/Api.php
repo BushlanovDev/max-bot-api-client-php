@@ -894,7 +894,7 @@ class Api
         ?int $count = null,
     ): array {
         $query = [
-            'comment_ids' => $commentIds !== null ? implode(',', $commentIds) : null,
+            'comment_ids' => ($commentIds === null || $commentIds === []) ? null : implode(',', $commentIds),
             'before' => $before,
             'after' => $after,
             'count' => $count,
@@ -938,10 +938,11 @@ class Api
      * @param string|null $text Comment text.
      * @param MessageFormat|null $format Comment format.
      * @param MessageLink|null $link Link to a comment to reply to or forward.
-     * @param bool $disableLinkPreview If false, server will not generate media preview for links in text.
+     * @param bool $disableLinkPreview If true, server will not generate media preview for links in text.
      *
      * @return CommentMessage
      * @throws ClientApiException
+     * @throws InvalidArgumentException
      * @throws NetworkException
      * @throws ReflectionException
      * @throws SerializationException
@@ -957,7 +958,7 @@ class Api
             $this->client->request(
                 self::METHOD_POST,
                 sprintf(self::ACTION_MESSAGE_COMMENTS, $messageId),
-                ['disable_link_preview' => $disableLinkPreview],
+                $disableLinkPreview ? ['disable_link_preview' => true] : [],
                 $this->buildNewCommentBody($text, $format, $link),
             )
         );
@@ -974,6 +975,7 @@ class Api
      *
      * @return Result
      * @throws ClientApiException
+     * @throws InvalidArgumentException
      * @throws NetworkException
      * @throws ReflectionException
      * @throws SerializationException
@@ -1405,6 +1407,7 @@ class Api
      * @param MessageLink|null $link
      *
      * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     private function buildNewCommentBody(?string $text, ?MessageFormat $format, ?MessageLink $link): array
     {
@@ -1414,6 +1417,14 @@ class Api
             'link' => $link,
         ];
 
-        return array_filter($body, fn($item) => $item !== null);
+        $body = array_filter($body, fn($item) => $item !== null);
+
+        if ($body === []) {
+            throw new InvalidArgumentException(
+                'At least one of $text, $format or $link must be provided to send or edit a comment.',
+            );
+        }
+
+        return $body;
     }
 }

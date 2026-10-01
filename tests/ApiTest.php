@@ -1383,6 +1383,21 @@ final class ApiTest extends TestCase
     }
 
     #[Test]
+    public function getCommentsTreatsEmptyCommentIdsListAsNoFilter(): void
+    {
+        $this->clientMock->expects($this->once())
+            ->method('request')
+            ->with('GET', '/messages/mid.post/comments', [])
+            ->willReturn(['messages' => []]);
+
+        $this->modelFactoryMock->expects($this->once())
+            ->method('createCommentMessages')
+            ->willReturn([]);
+
+        $this->assertSame([], $this->api->getComments('mid.post', []));
+    }
+
+    #[Test]
     public function getCommentByIdRequestsTheSingleComment(): void
     {
         $expectedComment = $this->comment();
@@ -1428,6 +1443,21 @@ final class ApiTest extends TestCase
     }
 
     #[Test]
+    public function sendCommentOmitsDisableLinkPreviewWhenFalse(): void
+    {
+        $this->clientMock->expects($this->once())
+            ->method('request')
+            ->with('POST', '/messages/mid.post/comments', [], ['text' => 'Nice post'])
+            ->willReturn(['message' => $this->commentData()]);
+
+        $this->modelFactoryMock->expects($this->once())
+            ->method('createCommentMessageFromSendResponse')
+            ->willReturn($this->comment());
+
+        $this->api->sendComment('mid.post', 'Nice post');
+    }
+
+    #[Test]
     public function editCommentPutsNewTextForTheComment(): void
     {
         $expectedResult = new Result(true, null);
@@ -1443,6 +1473,28 @@ final class ApiTest extends TestCase
             ->willReturn($expectedResult);
 
         $this->assertSame($expectedResult, $this->api->editComment('mid.post', 'mid.comment', 'Edited'));
+    }
+
+    #[Test]
+    public function sendCommentWithoutAnyFieldThrowsInvalidArgumentException(): void
+    {
+        $this->clientMock->expects($this->never())->method('request');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('At least one of $text, $format or $link must be provided');
+
+        $this->api->sendComment('mid.post');
+    }
+
+    #[Test]
+    public function editCommentWithoutAnyFieldThrowsInvalidArgumentException(): void
+    {
+        $this->clientMock->expects($this->never())->method('request');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('At least one of $text, $format or $link must be provided');
+
+        $this->api->editComment('mid.post', 'mid.comment');
     }
 
     #[Test]
