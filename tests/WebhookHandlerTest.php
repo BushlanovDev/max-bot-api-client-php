@@ -249,4 +249,40 @@ final class WebhookHandlerTest extends TestCase
 
         $this->assertFalse($handlerWasCalled);
     }
+
+    public static function nonJsonObjectBodyProvider(): array
+    {
+        return [
+            'number' => ['123'],
+            'null' => ['null'],
+            'string' => ['"abc"'],
+            'boolean' => ['true'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('nonJsonObjectBodyProvider')]
+    public function handleSkipsBodyThatIsNotAJsonObject(string $payload): void
+    {
+        $request = $this->createMockRequest($payload, self::SECRET);
+
+        $this->loggerMock->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('Failed to parse update: expected JSON object'));
+
+        $handlerWasCalled = false;
+        $this->dispatcher->addHandler(UpdateType::MessageCreated, function () use (&$handlerWasCalled) {
+            $handlerWasCalled = true;
+        });
+
+        $handler = new WebhookHandler(
+            $this->dispatcher,
+            new ModelFactory($this->loggerMock),
+            $this->loggerMock,
+            self::SECRET,
+        );
+        $handler->handle($request);
+
+        $this->assertFalse($handlerWasCalled);
+    }
 }
