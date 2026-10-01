@@ -56,6 +56,10 @@ class WebhookSubscribeCommand extends Command
                     $updateTypes[] = UpdateType::from($type);
                 } catch (\ValueError $e) {
                     $this->error("Invalid update type: $type");
+                    $this->line('Valid types: ' . implode(', ', array_map(
+                        static fn(UpdateType $t) => $t->value,
+                        UpdateType::cases(),
+                    )));
 
                     return self::FAILURE;
                 }

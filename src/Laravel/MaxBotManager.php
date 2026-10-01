@@ -112,15 +112,19 @@ readonly class MaxBotManager
      * This method should be called from a Laravel command or job.
      * It will run indefinitely until stopped.
      *
+     * @param int $timeout
+     * @param int|null $marker
+     * @param UpdateType[]|null $types Update types to fetch, null for all.
+     *
      * @throws BindingResolutionException
      * @codeCoverageIgnore
      */
-    public function startLongPolling(int $timeout = 90, ?int $marker = null): void
+    public function startLongPolling(int $timeout = 90, ?int $marker = null, ?array $types = null): void
     {
         /** @var LongPollingHandler $longPolling */
         $longPolling = $this->container->make(LongPollingHandler::class);
 
-        $longPolling->handle($timeout, $marker);
+        $longPolling->handle($timeout, $marker, $types);
     }
 
     /**

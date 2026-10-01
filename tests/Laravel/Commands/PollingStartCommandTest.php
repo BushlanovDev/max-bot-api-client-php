@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace BushlanovDev\MaxMessengerBot\Tests\Laravel\Commands;
 
+use BushlanovDev\MaxMessengerBot\Enums\UpdateType;
 use BushlanovDev\MaxMessengerBot\Laravel\Commands\PollingStartCommand;
 use BushlanovDev\MaxMessengerBot\Laravel\MaxBotManager;
+use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -21,6 +23,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 final class PollingStartCommandTest extends TestCase
 {
     private MockObject&MaxBotManager $botManagerMock;
+    private MockObject&Config $configMock;
     private PollingStartCommand $command;
 
     protected function setUp(): void
@@ -30,6 +33,12 @@ final class PollingStartCommandTest extends TestCase
         $this->botManagerMock = $this->createMock(MaxBotManager::class);
         $this->container->instance(MaxBotManager::class, $this->botManagerMock);
         $this->container->alias(MaxBotManager::class, 'maxbot.manager');
+
+        $this->configMock = $this->createMock(Config::class);
+        $this->configMock->method('get')->willReturnCallback(
+            static fn(string $key, mixed $default = null) => $key === 'maxbot.polling.timeout' ? 90 : $default,
+        );
+        $this->container->instance(Config::class, $this->configMock);
 
         $this->command = new PollingStartCommand();
         $this->command->setLaravel($this->container);
@@ -48,7 +57,7 @@ final class PollingStartCommandTest extends TestCase
         $this->botManagerMock
             ->expects($this->once())
             ->method('startLongPolling')
-            ->with($timeout);
+            ->with($timeout, null, null);
 
         $this->tester->execute(['--timeout' => $timeout]);
         $this->tester->assertCommandIsSuccessful();
@@ -65,7 +74,7 @@ final class PollingStartCommandTest extends TestCase
         $this->botManagerMock
             ->expects($this->once())
             ->method('startLongPolling')
-            ->with($defaultTimeout);
+            ->with($defaultTimeout, null, null);
 
         $this->tester->execute([]);
         $this->tester->assertCommandIsSuccessful();
@@ -75,6 +84,18 @@ final class PollingStartCommandTest extends TestCase
             "Starting long polling with a timeout of $defaultTimeout seconds...",
             $output
         );
+    }
+
+    #[Test]
+    public function handleFailsOnInvalidUpdateType(): void
+    {
+        $statusCode = $this->tester->execute(['--types' => ['not_a_real_type']]);
+
+        $this->assertSame(1, $statusCode, 'Command should return a failure exit code.');
+
+        $output = $this->tester->getDisplay();
+        $this->assertStringContainsString('Invalid update type: not_a_real_type', $output);
+        $this->assertStringContainsString('Valid types: ', $output);
     }
 
     #[Test]

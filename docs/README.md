@@ -573,6 +573,15 @@ MaxBot::sendUserMessage(123456, 'Hello from Laravel!');
 
 // Получение обновления
 $updates = MaxBot::getUpdates();
+
+// Работа с комментариями к постам в каналах
+MaxBot::sendComment('mid.post', 'Первый комментарий!');
+$comments = MaxBot::getComments('mid.post');
+
+// Установка команд бота (замена депрекированного editBotInfo)
+MaxBot::editBotCommands([
+    new BotCommand('start', 'Запустить бота'),
+]);
 ```
 
 ### Artisan команды
@@ -625,6 +634,22 @@ class WebhookController extends Controller
             // ...
         });
 
+        // Обработчики комментариев к постам в каналах
+        $botManager->onCommentCreated(function (CommentCreatedUpdate $update) {
+            // ...
+        });
+        $botManager->onCommentEdited(function (CommentEditedUpdate $update) {
+            // ...
+        });
+        $botManager->onCommentRemoved(function (CommentRemovedUpdate $update) {
+            // ...
+        });
+
+        // Обработчик изменения прав бота-администратора
+        $botManager->onBotAdminPermissionsChanged(function (BotAdminPermissionsChangedUpdate $update) {
+            // ...
+        });
+
         // Using Laravel container bindings
         $botManager->onMessageCreated(MessageHandler::class);
         $botManager->onCommand('help', HelpCommandHandler::class);
@@ -634,15 +659,35 @@ class WebhookController extends Controller
 }
 ```
 
-Добавьте маршрут в  `routes/web.php`:
+Добавьте маршрут в `routes/web.php`. Обязательно исключите его из CSRF-проверки —
+MAX не отправляет CSRF-токен, поэтому без исключения каждый запрос вебхука будет
+отклонён с ошибкой 419:
 
 ```php
-Route::post('/bot/webhook', [WebhookController::class, 'handle']);
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+
+Route::post('/bot/webhook', [WebhookController::class, 'handle'])
+    ->withoutMiddleware(VerifyCsrfToken::class);
 ```
+
+Либо разместите маршрут в `routes/api.php` — там CSRF-middleware не применяется.
 
 ### Long Polling
 
-Создайте artisan команду для получения long polling обновлений:
+Пакет поставляет готовую artisan-команду для long polling:
+
+```bash
+# Запуск с настройками по умолчанию (timeout из maxbot.polling.timeout или 90)
+php artisan maxbot:polling:start
+
+# С указанием таймаута
+php artisan maxbot:polling:start --timeout=30
+
+# Только определённые типы обновлений
+php artisan maxbot:polling:start --types=message_created --types=message_callback
+```
+
+При необходимости напишите свою команду:
 
 ```php
 use Illuminate\Console\Command;

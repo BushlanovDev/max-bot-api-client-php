@@ -53,7 +53,7 @@ class Api
 {
     public const string API_BASE_URL = 'https://platform-api2.max.ru';
 
-    public const string LIBRARY_VERSION = '1.6.6';
+    public const string LIBRARY_VERSION = '1.7.0';
 
     public const string API_VERSION = '1.2.5';
 

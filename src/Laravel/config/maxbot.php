@@ -54,6 +54,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Long Polling Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Timeout in seconds for the long polling getUpdates call (0-90).
+    | Used by the maxbot:polling:start command when no --timeout option
+    | is passed.
+    |
+    */
+    'polling' => [
+        'timeout' => (int)env('MAXBOT_POLLING_TIMEOUT', 90),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Logging Configuration
     |--------------------------------------------------------------------------
     |
