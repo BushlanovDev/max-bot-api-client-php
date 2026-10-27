@@ -559,7 +559,55 @@ php artisan vendor:publish --provider="BushlanovDev\MaxMessengerBot\Laravel\MaxB
 ```env
 MAXBOT_ACCESS_TOKEN=your_bot_access_token_here
 MAXBOT_WEBHOOK_SECRET=your_webhook_secret_here
+
+# Необязательные настройки
+MAXBOT_LOGGING_ENABLED=true
+MAXBOT_LOGGING_CHANNEL=maxbot
 ```
+
+#### Переменные окружения
+
+| Переменная | Конфиг-ключ | По умолчанию | Описание |
+|---|---|---|---|
+| `MAXBOT_ACCESS_TOKEN` | `access_token` | — | Токен бота из @MasterBot (**обязателен**) |
+| `MAXBOT_WEBHOOK_SECRET` | `webhook_secret` | `null` | Секрет для проверки подписи webhook-запросов |
+| `MAXBOT_BASE_URL` | `base_url` | `Api::API_BASE_URL` | Базовый URL Max Bot API |
+| `MAXBOT_API_VERSION` | `api_version` | `null` | Версия API (напр. `v1`) |
+| `MAXBOT_TIMEOUT` | `timeout` | `10` | Таймаут HTTP-запроса, сек |
+| `MAXBOT_CONNECT_TIMEOUT` | `connect_timeout` | `5` | Таймаут соединения, сек |
+| `MAXBOT_READ_TIMEOUT` | `read_timeout` | `10` | Таймаут чтения, сек |
+| `MAXBOT_POLLING_TIMEOUT` | `polling.timeout` | `90` | Таймаут long polling `getUpdates` (0–90), сек |
+| `MAXBOT_LOGGING_ENABLED` | `logging.enabled` | `false` | Включить детальное логирование запросов/ответов API |
+| `MAXBOT_LOGGING_CHANNEL` | `logging.channel` | `null` | Имя канала из `config/logging.php`; `null` — дефолтный логгер приложения. Действует только при `MAXBOT_LOGGING_ENABLED=true` |
+
+#### Логирование
+
+При `MAXBOT_LOGGING_ENABLED=true` пакет пишет детальные логи API-запросов.
+Укажите `MAXBOT_LOGGING_CHANNEL=maxbot`, чтобы направить их в отдельный канал —
+определите его в своём `config/logging.php`:
+
+```php
+'channels' => [
+    'maxbot' => [
+        'driver' => 'daily',
+        'path' => storage_path('logs/maxbot.log'),
+        'level' => 'debug',
+        'days' => 14,
+    ],
+],
+```
+
+Уровень фильтрации задаётся в конфиге канала (`level`), а не пакетом.
+Если канал с указанным именем не определён, Laravel выбросит
+`InvalidArgumentException: Log [maxbot] is not defined` при первом обращении.
+
+> **Обновление с предыдущих версий:** если у вас опубликован `config/maxbot.php`,
+> добавьте ключ `'channel' => env('MAXBOT_LOGGING_CHANNEL')` в секцию `logging`
+> вручную (или удалите файл и переопубликуйте конфиг командой `vendor:publish`).
+> Laravel mergeConfigFrom заменяет вложенные секции опубликованного конфига
+> целиком, поэтому новый ключ `channel` не появится автоматически.
+
+> Удалено: `MAXBOT_LOGGING_LEVEL` — настройка никогда не работала; используйте `level` в конфиге канала.
 
 ### Использование
 
