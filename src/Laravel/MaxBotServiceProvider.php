@@ -10,6 +10,7 @@ use BushlanovDev\MaxMessengerBot\ClientApiInterface;
 use BushlanovDev\MaxMessengerBot\Laravel\Commands\PollingStartCommand;
 use BushlanovDev\MaxMessengerBot\ModelFactory;
 use BushlanovDev\MaxMessengerBot\UpdateDispatcher;
+use BushlanovDev\MaxMessengerBot\WebAppDataValidator;
 use BushlanovDev\MaxMessengerBot\WebhookHandler;
 use BushlanovDev\MaxMessengerBot\LongPollingHandler;
 use BushlanovDev\MaxMessengerBot\Laravel\Commands\WebhookSubscribeCommand;
@@ -151,6 +152,20 @@ class MaxBotServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(WebAppDataValidator::class, function (Application $app) {
+            /** @var Config $config */
+            $config = $app->make(Config::class);
+            $accessToken = $config->get('maxbot.access_token');
+
+            if (empty($accessToken)) {
+                throw new InvalidArgumentException(
+                    'Max Bot access token is not configured. Please set MAXBOT_ACCESS_TOKEN in your .env file.'
+                );
+            }
+
+            return new WebAppDataValidator($accessToken);
+        });
+
         $this->app->singleton(MaxBotManager::class, function (Application $app) {
             return new MaxBotManager(
                 $app,
@@ -165,6 +180,7 @@ class MaxBotServiceProvider extends ServiceProvider
         $this->app->alias(UpdateDispatcher::class, 'maxbot.dispatcher');
         $this->app->alias(WebhookHandler::class, 'maxbot.webhook');
         $this->app->alias(LongPollingHandler::class, 'maxbot.polling');
+        $this->app->alias(WebAppDataValidator::class, 'maxbot.webapp');
         $this->app->alias(MaxBotManager::class, 'maxbot.manager');
     }
 
@@ -201,6 +217,7 @@ class MaxBotServiceProvider extends ServiceProvider
             UpdateDispatcher::class,
             WebhookHandler::class,
             LongPollingHandler::class,
+            WebAppDataValidator::class,
             MaxBotManager::class,
             'maxbot',
             'maxbot.api',
@@ -208,6 +225,7 @@ class MaxBotServiceProvider extends ServiceProvider
             'maxbot.dispatcher',
             'maxbot.webhook',
             'maxbot.polling',
+            'maxbot.webapp',
             'maxbot.manager',
         ];
     }

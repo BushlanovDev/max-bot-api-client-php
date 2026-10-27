@@ -16,6 +16,7 @@ use BushlanovDev\MaxMessengerBot\Laravel\MaxBotServiceProvider;
 use BushlanovDev\MaxMessengerBot\LongPollingHandler;
 use BushlanovDev\MaxMessengerBot\ModelFactory;
 use BushlanovDev\MaxMessengerBot\UpdateDispatcher;
+use BushlanovDev\MaxMessengerBot\WebAppDataValidator;
 use BushlanovDev\MaxMessengerBot\WebhookHandler;
 use Illuminate\Support\Facades\Artisan;
 use InvalidArgumentException;
@@ -40,6 +41,7 @@ use ReflectionClass;
 #[UsesClass(UpdateDispatcher::class)]
 #[UsesClass(MaxBotManager::class)]
 #[UsesClass(WebhookHandler::class)]
+#[UsesClass(WebAppDataValidator::class)]
 #[UsesClass(ModelFactory::class)]
 final class MaxBotServiceProviderTest extends TestCase
 {
@@ -91,6 +93,19 @@ final class MaxBotServiceProviderTest extends TestCase
     }
 
     #[Test]
+    public function itThrowsExceptionWhenAccessTokenIsMissingForWebAppDataValidator(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'Max Bot access token is not configured. Please set MAXBOT_ACCESS_TOKEN in your .env file.'
+        );
+
+        $this->app['config']->set('maxbot.access_token', null);
+
+        $this->app->make(WebAppDataValidator::class);
+    }
+
+    #[Test]
     #[RunInSeparateProcess]
     #[PreserveGlobalState(false)]
     public function itThrowsExceptionWhenGuzzleIsMissing(): void
@@ -128,6 +143,8 @@ final class MaxBotServiceProviderTest extends TestCase
             'maxbot.webhook alias' => ['maxbot.webhook', WebhookHandler::class],
             'LongPollingHandler::class' => [LongPollingHandler::class, LongPollingHandler::class],
             'maxbot.polling alias' => ['maxbot.polling', LongPollingHandler::class],
+            'WebAppDataValidator::class' => [WebAppDataValidator::class, WebAppDataValidator::class],
+            'maxbot.webapp alias' => ['maxbot.webapp', WebAppDataValidator::class],
             'MaxBotManager::class' => [MaxBotManager::class, MaxBotManager::class],
             'maxbot.manager alias' => ['maxbot.manager', MaxBotManager::class],
         ];
@@ -420,6 +437,7 @@ final class MaxBotServiceProviderTest extends TestCase
             UpdateDispatcher::class,
             WebhookHandler::class,
             LongPollingHandler::class,
+            WebAppDataValidator::class,
             MaxBotManager::class,
             'maxbot',
             'maxbot.api',
@@ -427,6 +445,7 @@ final class MaxBotServiceProviderTest extends TestCase
             'maxbot.dispatcher',
             'maxbot.webhook',
             'maxbot.polling',
+            'maxbot.webapp',
             'maxbot.manager',
         ];
 
