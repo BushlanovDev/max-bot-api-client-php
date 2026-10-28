@@ -16,6 +16,7 @@ use BushlanovDev\MaxMessengerBot\Laravel\Commands\WebhookSubscribeCommand;
 use BushlanovDev\MaxMessengerBot\Laravel\Commands\WebhookUnsubscribeCommand;
 use BushlanovDev\MaxMessengerBot\Laravel\Commands\WebhookListCommand;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Log\LogManager;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Config\Repository as Config;
 use Psr\Log\LoggerInterface;
@@ -55,9 +56,7 @@ class MaxBotServiceProvider extends ServiceProvider
                 );
             }
 
-            $logger = $config->get('maxbot.logging.enabled', false)
-                ? $app->make(LoggerInterface::class)
-                : new NullLogger();
+            $logger = $this->resolveLogger($app);
 
             $guzzle = new \GuzzleHttp\Client([
                 'timeout' => (int)$config->get('maxbot.timeout', 10),
@@ -83,13 +82,7 @@ class MaxBotServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(ModelFactory::class, function (Application $app) {
-            /** @var Config $config */
-            $config = $app->make(Config::class);
-            $logger = $config->get('maxbot.logging.enabled', false)
-                ? $app->make(LoggerInterface::class)
-                : new NullLogger();
-
-            return new ModelFactory($logger);
+            return new ModelFactory($this->resolveLogger($app));
         });
 
         $this->app->singleton(Api::class, function (Application $app) {
@@ -103,9 +96,7 @@ class MaxBotServiceProvider extends ServiceProvider
                 );
             }
 
-            $logger = $config->get('maxbot.logging.enabled', false)
-                ? $app->make(LoggerInterface::class)
-                : new NullLogger();
+            $logger = $this->resolveLogger($app);
 
             return new Api(
                 $accessToken,
@@ -124,9 +115,7 @@ class MaxBotServiceProvider extends ServiceProvider
             $config = $app->make(Config::class);
             $secret = $config->get('maxbot.webhook_secret');
 
-            $logger = $config->get('maxbot.logging.enabled', false)
-                ? $app->make(LoggerInterface::class)
-                : new NullLogger();
+            $logger = $this->resolveLogger($app);
 
             return new WebhookHandler(
                 $app->make(UpdateDispatcher::class),
@@ -137,12 +126,7 @@ class MaxBotServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(LongPollingHandler::class, function (Application $app) {
-            /** @var Config $config */
-            $config = $app->make(Config::class);
-
-            $logger = $config->get('maxbot.logging.enabled', false)
-                ? $app->make(LoggerInterface::class)
-                : new NullLogger();
+            $logger = $this->resolveLogger($app);
 
             return new LongPollingHandler(
                 $app->make(Api::class),
@@ -210,5 +194,33 @@ class MaxBotServiceProvider extends ServiceProvider
             'maxbot.polling',
             'maxbot.manager',
         ];
+    }
+
+    /**
+     * Resolve the logger based on the package configuration.
+     *
+     * Returns NullLogger when logging is disabled, the configured logging
+     * channel when `maxbot.logging.channel` is set, or the application's
+     * default logger otherwise.
+     */
+    private function resolveLogger(Application $app): LoggerInterface
+    {
+        /** @var Config $config */
+        $config = $app->make(Config::class);
+
+        if (!$config->get('maxbot.logging.enabled', false)) {
+            return new NullLogger();
+        }
+
+        $channel = $config->get('maxbot.logging.channel');
+
+        if (is_string($channel) && $channel !== '') {
+            /** @var LogManager $logManager */
+            $logManager = $app->make(LogManager::class);
+
+            return $logManager->channel($channel);
+        }
+
+        return $app->make(LoggerInterface::class);
     }
 }

@@ -17,6 +17,7 @@ use BushlanovDev\MaxMessengerBot\LongPollingHandler;
 use BushlanovDev\MaxMessengerBot\ModelFactory;
 use BushlanovDev\MaxMessengerBot\UpdateDispatcher;
 use BushlanovDev\MaxMessengerBot\WebhookHandler;
+use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Artisan;
 use InvalidArgumentException;
 use LogicException;
@@ -386,6 +387,66 @@ final class MaxBotServiceProviderTest extends TestCase
         $actualLogger = $loggerProp->getValue($api);
 
         $this->assertSame($mockLogger, $actualLogger);
+    }
+
+    #[Test]
+    public function clientIsConfiguredWithChannelLoggerWhenLoggingChannelIsConfigured(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', true);
+        $this->app['config']->set('maxbot.logging.channel', 'maxbot');
+        $this->app['config']->set('logging.channels.maxbot', [
+            'driver' => 'single',
+            'path' => storage_path('logs/maxbot.log'),
+            'level' => 'debug',
+        ]);
+
+        /** @var Client $client */
+        $client = $this->app->make(ClientApiInterface::class);
+
+        $reflection = new ReflectionClass($client);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($client);
+
+        $expectedLogger = $this->app->make(LogManager::class)->channel('maxbot');
+        $this->assertSame($expectedLogger, $actualLogger);
+    }
+
+    #[Test]
+    public function webhookHandlerIsConfiguredWithChannelLoggerWhenLoggingChannelIsConfigured(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', true);
+        $this->app['config']->set('maxbot.logging.channel', 'maxbot');
+        $this->app['config']->set('logging.channels.maxbot', [
+            'driver' => 'single',
+            'path' => storage_path('logs/maxbot.log'),
+            'level' => 'debug',
+        ]);
+
+        /** @var WebhookHandler $handler */
+        $handler = $this->app->make(WebhookHandler::class);
+
+        $reflection = new ReflectionClass($handler);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($handler);
+
+        $expectedLogger = $this->app->make(LogManager::class)->channel('maxbot');
+        $this->assertSame($expectedLogger, $actualLogger);
+    }
+
+    #[Test]
+    public function clientIsConfiguredWithNullLoggerWhenLoggingIsDisabledEvenWithChannel(): void
+    {
+        $this->app['config']->set('maxbot.logging.enabled', false);
+        $this->app['config']->set('maxbot.logging.channel', 'maxbot');
+
+        /** @var Client $client */
+        $client = $this->app->make(ClientApiInterface::class);
+
+        $reflection = new ReflectionClass($client);
+        $loggerProp = $reflection->getProperty('logger');
+        $actualLogger = $loggerProp->getValue($client);
+
+        $this->assertInstanceOf(NullLogger::class, $actualLogger);
     }
 
     /**

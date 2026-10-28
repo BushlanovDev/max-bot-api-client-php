@@ -72,12 +72,13 @@ return [
     |--------------------------------------------------------------------------
     |
     | Whether to enable detailed logging of API requests and responses.
-    | This uses Laravel's configured logger.
+    | When `channel` is set, logs are sent to that channel from your
+    | config/logging.php; otherwise the default application logger is used.
     |
     */
     'logging' => [
         'enabled' => (bool)env('MAXBOT_LOGGING_ENABLED', false),
-        'level' => env('MAXBOT_LOGGING_LEVEL', 'debug'),
+        'channel' => env('MAXBOT_LOGGING_CHANNEL'),
     ],
 ];
 // @codeCoverageIgnoreEnd
