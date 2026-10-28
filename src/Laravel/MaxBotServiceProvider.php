@@ -10,7 +10,7 @@ use BushlanovDev\MaxMessengerBot\ClientApiInterface;
 use BushlanovDev\MaxMessengerBot\Laravel\Commands\PollingStartCommand;
 use BushlanovDev\MaxMessengerBot\ModelFactory;
 use BushlanovDev\MaxMessengerBot\UpdateDispatcher;
-use BushlanovDev\MaxMessengerBot\WebAppDataValidator;
+use BushlanovDev\MaxMessengerBot\WebApp\InitDataValidator;
 use BushlanovDev\MaxMessengerBot\WebhookHandler;
 use BushlanovDev\MaxMessengerBot\LongPollingHandler;
 use BushlanovDev\MaxMessengerBot\Laravel\Commands\WebhookSubscribeCommand;
@@ -43,13 +43,7 @@ class MaxBotServiceProvider extends ServiceProvider
         $this->app->singleton(ClientApiInterface::class, function (Application $app) {
             /** @var Config $config */
             $config = $app->make(Config::class);
-            $accessToken = $config->get('maxbot.access_token');
-
-            if (empty($accessToken)) {
-                throw new InvalidArgumentException(
-                    'Max Bot access token is not configured. Please set MAXBOT_ACCESS_TOKEN in your .env file.'
-                );
-            }
+            $accessToken = $this->resolveAccessToken($app);
 
             if (!class_exists(\GuzzleHttp\Client::class) || !class_exists(\GuzzleHttp\Psr7\HttpFactory::class)) {
                 throw new \LogicException(
@@ -87,16 +81,7 @@ class MaxBotServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(Api::class, function (Application $app) {
-            /** @var Config $config */
-            $config = $app->make(Config::class);
-            $accessToken = $config->get('maxbot.access_token');
-
-            if (empty($accessToken)) {
-                throw new InvalidArgumentException(
-                    'Max Bot access token is not configured. Please set MAXBOT_ACCESS_TOKEN in your .env file.'
-                );
-            }
-
+            $accessToken = $this->resolveAccessToken($app);
             $logger = $this->resolveLogger($app);
 
             return new Api(
@@ -136,18 +121,8 @@ class MaxBotServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->singleton(WebAppDataValidator::class, function (Application $app) {
-            /** @var Config $config */
-            $config = $app->make(Config::class);
-            $accessToken = $config->get('maxbot.access_token');
-
-            if (empty($accessToken)) {
-                throw new InvalidArgumentException(
-                    'Max Bot access token is not configured. Please set MAXBOT_ACCESS_TOKEN in your .env file.'
-                );
-            }
-
-            return new WebAppDataValidator($accessToken);
+        $this->app->singleton(InitDataValidator::class, function (Application $app) {
+            return new InitDataValidator($this->resolveAccessToken($app));
         });
 
         $this->app->singleton(MaxBotManager::class, function (Application $app) {
@@ -164,7 +139,7 @@ class MaxBotServiceProvider extends ServiceProvider
         $this->app->alias(UpdateDispatcher::class, 'maxbot.dispatcher');
         $this->app->alias(WebhookHandler::class, 'maxbot.webhook');
         $this->app->alias(LongPollingHandler::class, 'maxbot.polling');
-        $this->app->alias(WebAppDataValidator::class, 'maxbot.webapp');
+        $this->app->alias(InitDataValidator::class, 'maxbot.webapp.validator');
         $this->app->alias(MaxBotManager::class, 'maxbot.manager');
     }
 
@@ -201,7 +176,7 @@ class MaxBotServiceProvider extends ServiceProvider
             UpdateDispatcher::class,
             WebhookHandler::class,
             LongPollingHandler::class,
-            WebAppDataValidator::class,
+            InitDataValidator::class,
             MaxBotManager::class,
             'maxbot',
             'maxbot.api',
@@ -209,9 +184,29 @@ class MaxBotServiceProvider extends ServiceProvider
             'maxbot.dispatcher',
             'maxbot.webhook',
             'maxbot.polling',
-            'maxbot.webapp',
+            'maxbot.webapp.validator',
             'maxbot.manager',
         ];
+    }
+
+    /**
+     * Resolve the bot access token from the package configuration.
+     *
+     * @throws InvalidArgumentException When `maxbot.access_token` is not set.
+     */
+    private function resolveAccessToken(Application $app): string
+    {
+        /** @var Config $config */
+        $config = $app->make(Config::class);
+        $accessToken = $config->get('maxbot.access_token');
+
+        if (empty($accessToken)) {
+            throw new InvalidArgumentException(
+                'Max Bot access token is not configured. Please set MAXBOT_ACCESS_TOKEN in your .env file.'
+            );
+        }
+
+        return $accessToken;
     }
 
     /**

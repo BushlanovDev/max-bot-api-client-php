@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-namespace BushlanovDev\MaxMessengerBot;
+namespace BushlanovDev\MaxMessengerBot\WebApp;
 
 use BushlanovDev\MaxMessengerBot\Exceptions\SecurityException;
+use BushlanovDev\MaxMessengerBot\Models\WebApp\InitData;
 use InvalidArgumentException;
+use ReflectionException;
 
 /**
  * Checks init data a MAX mini app sends to your server (window.WebApp.initData): the
@@ -13,7 +15,7 @@ use InvalidArgumentException;
  *
  * @see https://dev.max.ru/docs/webapps/validation
  */
-final readonly class WebAppDataValidator
+final readonly class InitDataValidator
 {
     private const string HMAC_KEY = 'WebAppData';
 
@@ -31,17 +33,19 @@ final readonly class WebAppDataValidator
     }
 
     /**
-     * Validates init data and returns it parsed.
+     * Validates init data and returns it parsed. Only data that cannot be trusted is refused:
+     * a change in the format of the signed data does not fail validation, see InitData::fromArray().
      *
      * @param string $initData Raw init data, as the mini app read it from window.WebApp.initData.
      * @param int|null $maxAge Seconds the data stays valid after auth_date; null skips the check.
      *                         A mini app open for long keeps sending the same data, so a day is a fair default.
      * @param int|null $now Current Unix time; for tests.
      *
-     * @return WebAppData
+     * @return InitData
      * @throws SecurityException
+     * @throws ReflectionException
      */
-    public function validate(string $initData, ?int $maxAge = 86400, ?int $now = null): WebAppData
+    public function validate(string $initData, ?int $maxAge = 86400, ?int $now = null): InitData
     {
         $fields = $this->parseFields($initData);
 
@@ -63,14 +67,7 @@ final readonly class WebAppDataValidator
             throw new SecurityException('Init data has expired.');
         }
 
-        return new WebAppData(
-            authDate: $authDate,
-            queryId: $fields['query_id'] ?? null,
-            startParam: $fields['start_param'] ?? null,
-            user: $this->decodeJson($fields['user'] ?? null),
-            chat: $this->decodeJson($fields['chat'] ?? null),
-            fields: $fields,
-        );
+        return InitData::fromArray($fields);
     }
 
     /**
@@ -117,19 +114,5 @@ final readonly class WebAppDataValidator
         $secretKey = hash_hmac('sha256', $this->botToken, self::HMAC_KEY, true);
 
         return hash_hmac('sha256', implode("\n", $lines), $secretKey);
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function decodeJson(?string $value): ?array
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $decoded = json_decode($value, true);
-
-        return is_array($decoded) ? $decoded : null;
     }
 }

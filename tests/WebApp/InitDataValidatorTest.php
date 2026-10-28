@@ -2,20 +2,25 @@
 
 declare(strict_types=1);
 
-namespace BushlanovDev\MaxMessengerBot\Tests;
+namespace BushlanovDev\MaxMessengerBot\Tests\WebApp;
 
+use BushlanovDev\MaxMessengerBot\Enums\ChatType;
 use BushlanovDev\MaxMessengerBot\Exceptions\SecurityException;
-use BushlanovDev\MaxMessengerBot\WebAppData;
-use BushlanovDev\MaxMessengerBot\WebAppDataValidator;
+use BushlanovDev\MaxMessengerBot\Models\WebApp\InitData;
+use BushlanovDev\MaxMessengerBot\Models\WebApp\InitDataChat;
+use BushlanovDev\MaxMessengerBot\Models\WebApp\InitDataUser;
+use BushlanovDev\MaxMessengerBot\WebApp\InitDataValidator;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(WebAppDataValidator::class)]
-#[UsesClass(WebAppData::class)]
-final class WebAppDataValidatorTest extends TestCase
+#[CoversClass(InitDataValidator::class)]
+#[UsesClass(InitData::class)]
+#[UsesClass(InitDataUser::class)]
+#[UsesClass(InitDataChat::class)]
+final class InitDataValidatorTest extends TestCase
 {
     private const string BOT_TOKEN = '123456:test-token-not-real';
     private const int AUTH_DATE = 1761580800;
@@ -63,14 +68,16 @@ final class WebAppDataValidatorTest extends TestCase
     #[Test]
     public function validDataIsParsed(): void
     {
-        $data = (new WebAppDataValidator(self::BOT_TOKEN))->validate(self::sign(self::fields()), now: self::AUTH_DATE + 60);
+        $data = (new InitDataValidator(self::BOT_TOKEN))->validate(self::sign(self::fields()), now: self::AUTH_DATE + 60);
 
         $this->assertSame(self::AUTH_DATE, $data->authDate);
         $this->assertSame('f7b3a1c2', $data->queryId);
         $this->assertSame('promo_42', $data->startParam);
-        $this->assertSame(400, $data->user['id'] ?? null);
-        $this->assertSame('Иван', $data->user['first_name'] ?? null);
-        $this->assertSame(['id' => 500, 'type' => 'DIALOG'], $data->chat);
+        $this->assertSame('10.0.0.1', $data->ip);
+        $this->assertSame(400, $data->user?->id);
+        $this->assertSame('Иван', $data->user?->firstName);
+        $this->assertSame(500, $data->chat?->id);
+        $this->assertSame(ChatType::Dialog, $data->chat?->type);
         $this->assertSame('10.0.0.1', $data->fields['ip']);
         $this->assertArrayNotHasKey('hash', $data->fields);
     }
@@ -79,15 +86,34 @@ final class WebAppDataValidatorTest extends TestCase
     public function optionalFieldsMayBeAbsent(): void
     {
         // A trailing `&` leaves an empty pair, which is skipped.
-        $data = (new WebAppDataValidator(self::BOT_TOKEN))->validate(
+        $data = (new InitDataValidator(self::BOT_TOKEN))->validate(
             self::sign(['auth_date' => (string)self::AUTH_DATE]) . '&',
             now: self::AUTH_DATE,
         );
 
         $this->assertNull($data->queryId);
         $this->assertNull($data->startParam);
+        $this->assertNull($data->ip);
         $this->assertNull($data->user);
         $this->assertNull($data->chat);
+    }
+
+    #[Test]
+    public function changedFormatOfSignedDataDoesNotFailValidation(): void
+    {
+        $initData = self::sign([
+            'auth_date' => (string)self::AUTH_DATE,
+            'platform' => 'ios',
+            'user' => '{"first_name":"Иван"}',
+            'chat' => '{"id":500,"type":"GROUP"}',
+        ]);
+
+        $data = (new InitDataValidator(self::BOT_TOKEN))->validate($initData, now: self::AUTH_DATE);
+
+        $this->assertNull($data->user);
+        $this->assertSame(500, $data->chat?->id);
+        $this->assertNull($data->chat?->type);
+        $this->assertSame('ios', $data->fields['platform']);
     }
 
     #[Test]
@@ -97,14 +123,14 @@ final class WebAppDataValidatorTest extends TestCase
 
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('signature verification failed');
-        (new WebAppDataValidator(self::BOT_TOKEN))->validate($initData, now: self::AUTH_DATE);
+        (new InitDataValidator(self::BOT_TOKEN))->validate($initData, now: self::AUTH_DATE);
     }
 
     #[Test]
     public function anotherBotIsRefused(): void
     {
         $this->expectException(SecurityException::class);
-        (new WebAppDataValidator('999:other-bot'))->validate(self::sign(self::fields()), now: self::AUTH_DATE);
+        (new InitDataValidator('999:other-bot'))->validate(self::sign(self::fields()), now: self::AUTH_DATE);
     }
 
     #[Test]
@@ -114,7 +140,7 @@ final class WebAppDataValidatorTest extends TestCase
 
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('repeated field "user"');
-        (new WebAppDataValidator(self::BOT_TOKEN))->validate($forged, now: self::AUTH_DATE);
+        (new InitDataValidator(self::BOT_TOKEN))->validate($forged, now: self::AUTH_DATE);
     }
 
     #[Test]
@@ -122,21 +148,32 @@ final class WebAppDataValidatorTest extends TestCase
     {
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('no hash');
-        (new WebAppDataValidator(self::BOT_TOKEN))->validate('auth_date=' . self::AUTH_DATE, now: self::AUTH_DATE);
+        (new InitDataValidator(self::BOT_TOKEN))->validate('auth_date=' . self::AUTH_DATE, now: self::AUTH_DATE);
     }
 
     #[Test]
-    public function expiredDataIsRefusedUnlessTheCheckIsOff(): void
+    public function dataIsValidForAnHourByDefault(): void
     {
-        $validator = new WebAppDataValidator(self::BOT_TOKEN);
+        $validator = new InitDataValidator(self::BOT_TOKEN);
         $initData = self::sign(self::fields());
-        $dayLater = self::AUTH_DATE + 86401;
 
-        $this->assertSame(self::AUTH_DATE, $validator->validate($initData, maxAge: null, now: $dayLater)->authDate);
+        $this->assertSame(self::AUTH_DATE, $validator->validate($initData, now: self::AUTH_DATE + 86400)->authDate);
 
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('expired');
-        $validator->validate($initData, now: $dayLater);
+        $validator->validate($initData, now: self::AUTH_DATE + 86401);
+    }
+
+    #[Test]
+    public function expiryCheckCanBeTurnedOff(): void
+    {
+        $data = (new InitDataValidator(self::BOT_TOKEN))->validate(
+            self::sign(self::fields()),
+            maxAge: null,
+            now: self::AUTH_DATE + 86400 * 365,
+        );
+
+        $this->assertSame(self::AUTH_DATE, $data->authDate);
     }
 
     #[Test]
@@ -144,13 +181,13 @@ final class WebAppDataValidatorTest extends TestCase
     {
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('auth_date');
-        (new WebAppDataValidator(self::BOT_TOKEN))->validate(self::sign(['query_id' => 'f7b3a1c2']));
+        (new InitDataValidator(self::BOT_TOKEN))->validate(self::sign(['query_id' => 'f7b3a1c2']));
     }
 
     #[Test]
     public function emptyTokenIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new WebAppDataValidator('');
+        new InitDataValidator('');
     }
 }

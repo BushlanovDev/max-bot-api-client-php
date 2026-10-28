@@ -541,28 +541,37 @@ $result = $api->deleteComment('mid.post', 'mid.comment');
 
 ```php
 use BushlanovDev\MaxMessengerBot\Exceptions\SecurityException;
-use BushlanovDev\MaxMessengerBot\WebAppDataValidator;
+use BushlanovDev\MaxMessengerBot\WebApp\InitDataValidator;
 
-$validator = new WebAppDataValidator('YOUR_BOT_API_TOKEN');
+$validator = new InitDataValidator('YOUR_BOT_API_TOKEN');
 
 try {
     $data = $validator->validate($initData); // по умолчанию данные действительны сутки
     // $validator->validate($initData, maxAge: 3600); — свой срок; maxAge: null — без проверки срока
 } catch (SecurityException $e) {
-    // подпись не сошлась, данные устарели или повреждены
+    // подпись не сошлась, поле повторяется, нет auth_date или данные устарели
 }
 
-$data->user['id'];      // пользователь: id, first_name, last_name, username, language_code, photo_url
-$data->chat;            // чат, из которого открыто приложение: id, type
+$data->user?->id;       // пользователь (InitDataUser): id, firstName, lastName, username, languageCode, photoUrl
+$data->chat?->type;     // чат, из которого открыто приложение (InitDataChat): id, type (ChatType)
 $data->startParam;      // параметр ссылки ?startapp=...
+$data->queryId;         // идентификатор сессии
+$data->ip;              // IP-адрес пользователя
 $data->authDate;        // время подписи, Unix time
-$data->fields;          // все подписанные поля
+$data->fields;          // все подписанные поля как пришли
 ```
+
+Исключение бросается, только если данным нельзя доверять. Если MAX изменит формат подписанных
+данных — например, добавит поле или новый тип чата, — валидация не упадёт: то, что не удалось
+разобрать, станет `null`, а исходные значения останутся в `$data->fields`.
+
+Пока мини-приложение открыто, `initData` не обновляется. Проверьте данные при входе и дальше
+работайте со своей сессией — или передайте больший `maxAge`.
 
 В Laravel валидатор берёт токен из `maxbot.access_token`:
 
 ```php
-public function profile(Request $request, WebAppDataValidator $validator)
+public function profile(Request $request, InitDataValidator $validator)
 {
     $data = $validator->validate($request->header('X-Max-Init-Data', ''));
     // ...
