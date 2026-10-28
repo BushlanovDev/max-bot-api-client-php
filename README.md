@@ -174,6 +174,13 @@ $handler = $api->createLongPollingHandler();           // Обновления �
 $handler->handle();
 ```
 
+Проверка данных мини-приложения (`window.WebApp.initData`) на сервере
+
+```php
+$data = (new WebAppDataValidator('YOUR_BOT_API_TOKEN'))->validate($initData); // SecurityException, если подпись не сошлась
+$data->user['id'];
+```
+
 > ℹ️ С полной документацией [вы можете ознакомиться тут](./docs/README.md).
 
 ## Реализованные методы

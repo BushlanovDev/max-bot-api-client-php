@@ -46,6 +46,8 @@
     - `POST /messages/{messageId}/comments` (`sendComment`) - [*Отправка комментария.*](#Отправка-комментария)
     - `PUT /messages/{messageId}/comments` (`editComment`) - [*Редактирование комментария.*](#Редактирование-комментария)
     - `DELETE /messages/{messageId}/comments` (`deleteComment`) - [*Удаление комментария.*](#Удаление-комментария)
+- [Мини-приложения](#Мини-приложения)
+    - [Проверка данных мини-приложения](#Проверка-данных-мини-приложения)
 - [Laravel](#Laravel)
     - [Регистрация пакета](#Регистрация-пакета)
     - [Настройка](#Настройка)
@@ -527,6 +529,44 @@ $result = $api->editComment(
 
 ```php
 $result = $api->deleteComment('mid.post', 'mid.comment');
+```
+
+## Мини-приложения
+
+### Проверка данных мини-приложения
+
+Мини-приложение передаёт на ваш сервер строку `window.WebApp.initData`. Перед тем как доверять
+пользователю из неё, проверьте подпись токеном бота
+([документация MAX](https://dev.max.ru/docs/webapps/validation)):
+
+```php
+use BushlanovDev\MaxMessengerBot\Exceptions\SecurityException;
+use BushlanovDev\MaxMessengerBot\WebAppDataValidator;
+
+$validator = new WebAppDataValidator('YOUR_BOT_API_TOKEN');
+
+try {
+    $data = $validator->validate($initData); // по умолчанию данные действительны сутки
+    // $validator->validate($initData, maxAge: 3600); — свой срок; maxAge: null — без проверки срока
+} catch (SecurityException $e) {
+    // подпись не сошлась, данные устарели или повреждены
+}
+
+$data->user['id'];      // пользователь: id, first_name, last_name, username, language_code, photo_url
+$data->chat;            // чат, из которого открыто приложение: id, type
+$data->startParam;      // параметр ссылки ?startapp=...
+$data->authDate;        // время подписи, Unix time
+$data->fields;          // все подписанные поля
+```
+
+В Laravel валидатор берёт токен из `maxbot.access_token`:
+
+```php
+public function profile(Request $request, WebAppDataValidator $validator)
+{
+    $data = $validator->validate($request->header('X-Max-Init-Data', ''));
+    // ...
+}
 ```
 
 ## Laravel
