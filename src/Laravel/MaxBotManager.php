@@ -58,9 +58,9 @@ readonly class MaxBotManager
             /** @var WebhookHandler $webhookHandler */
             $webhookHandler = $this->container->make(WebhookHandler::class);
 
-            $headers = array_map(function ($values) {
+            $headers = array_filter(array_map(function ($values) {
                 return array_filter($values, fn($value) => $value !== null);
-            }, $request->headers->all());
+            }, $request->headers->all()));
 
             $webhookHandler->handle(
                 new ServerRequest(
@@ -68,7 +68,7 @@ readonly class MaxBotManager
                     $request->getUri(),
                     $headers,
                     $request->getContent(),
-                    $request->getProtocolVersion() ?? '1.1',
+                    str_replace('HTTP/', '', $request->getProtocolVersion() ?? '1.1'),
                 )
             );
 

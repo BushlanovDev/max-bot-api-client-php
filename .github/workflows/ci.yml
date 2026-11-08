@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -31,11 +31,17 @@ jobs:
     strategy:
       matrix:
         php-versions: [ "8.3", "8.4", "8.5" ]
-    name: PHP ${{ matrix.php-versions }} Test on ubuntu-latest
+        guzzle-versions: [ "^7.0", "^8.0" ]
+        include:
+          - guzzle-versions: "^7.0"
+            laravel-version: "^12.0"
+          - guzzle-versions: "^8.0"
+            laravel-version: "^13.0"
+    name: PHP ${{ matrix.php-versions }} / Guzzle ${{ matrix.guzzle-versions }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -44,7 +50,7 @@ jobs:
           coverage: xdebug
 
       - name: Install composer dependencies
-        run: composer install --prefer-dist --no-interaction
+        run: composer update --prefer-dist --no-interaction --with "guzzlehttp/guzzle:${{ matrix.guzzle-versions }}" --with "laravel/framework:${{ matrix.laravel-version }}"
 
       - name: PHPUnit
         run: ./vendor/bin/phpunit --configuration=phpunit.xml --coverage-text
