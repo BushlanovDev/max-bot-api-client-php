@@ -36,7 +36,7 @@ final class WebhookUnsubscribeCommandTest extends TestCase
         $this->command->setLaravel($this->container);
 
         $application = new ConsoleApplication();
-        $application->add($this->command);
+        $application->addCommand($this->command);
         $commandInApp = $application->find('maxbot:webhook:unsubscribe');
         $this->tester = new CommandTester($commandInApp);
     }

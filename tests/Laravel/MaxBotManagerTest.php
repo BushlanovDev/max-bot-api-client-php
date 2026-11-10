@@ -103,6 +103,7 @@ final class MaxBotManagerTest extends TestCase
         $this->container->instance(WebhookHandler::class, $webhookHandler);
 
         $request = Request::create('/webhook', 'POST', content: '{"update_type":"message_created"}');
+        $request->headers->set('X-Optional-Header', []);
 
         $realUpdate = new MessageCreatedUpdate(
             time(),
