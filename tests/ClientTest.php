@@ -131,6 +131,21 @@ final class ClientTest extends TestCase
     }
 
     #[Test]
+    public function requestNormalizesHttpMethodToUpperCase(): void
+    {
+        $this->requestFactoryMock
+            ->expects($this->once())
+            ->method('createRequest')
+            ->with('GET', $this->anything())
+            ->willReturn($this->requestMock);
+
+        $this->responseMock->method('getStatusCode')->willReturn(200);
+        $this->streamMock->method('__toString')->willReturn('{"id":987}');
+
+        $this->assertSame(['id' => 987], $this->client->request('get', '/me'));
+    }
+
+    #[Test]
     public function successfulPostRequestWithJsonBody(): void
     {
         $uri = '/subscriptions';

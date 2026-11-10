@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Facade;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -122,6 +123,76 @@ final class MaxBotManagerTest extends TestCase
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertTrue($wasDispatched, 'The update was not dispatched correctly.');
+    }
+
+    /**
+     * @return array<string, array{array<int, mixed>}>
+     */
+    public static function headerValuesIgnoredByWebhookProvider(): array
+    {
+        return [
+            'integer value' => [[42]],
+            'only null' => [[null]],
+            'nested array' => [[['nested']]],
+        ];
+    }
+
+    /**
+     * @param array<int, mixed> $values
+     */
+    #[Test]
+    #[DataProvider('headerValuesIgnoredByWebhookProvider')]
+    public function handleWebhookIgnoresHeadersTheHandlerDoesNotRead(array $values): void
+    {
+        $request = Request::create('/webhook', 'POST', content: '{"update_type":"message_created"}');
+        $request->headers->set('X-Tenant', $values);
+
+        $this->assertSame([200, true], $this->handleWebhookWithUpdate($request));
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function nonStandardServerProtocolProvider(): array
+    {
+        return [
+            'empty' => [''],
+            'lower case' => ['http/1.1'],
+            'trailing space' => ['HTTP/1.1 '],
+            'not a version' => ['INCLUDED'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('nonStandardServerProtocolProvider')]
+    public function handleWebhookIgnoresServerProtocol(string $protocol): void
+    {
+        $request = Request::create(
+            '/webhook',
+            'POST',
+            server: ['SERVER_PROTOCOL' => $protocol],
+            content: '{"update_type":"message_created"}',
+        );
+
+        $this->assertSame([200, true], $this->handleWebhookWithUpdate($request));
+    }
+
+    #[Test]
+    public function handleWebhookPassesSecretHeaderToHandler(): void
+    {
+        $request = Request::create('/webhook', 'POST', content: '{"update_type":"message_created"}');
+        $request->headers->set('X-Max-Bot-Api-Secret', 'real-secret');
+
+        $this->assertSame([200, true], $this->handleWebhookWithUpdate($request, 'real-secret'));
+    }
+
+    #[Test]
+    public function handleWebhookReturns403WhenSecretHeaderIsNotScalar(): void
+    {
+        $request = Request::create('/webhook', 'POST', content: '{"update_type":"message_created"}');
+        $request->headers->set('X-Max-Bot-Api-Secret', [['nested']]);
+
+        $this->assertSame([403, false], $this->handleWebhookWithUpdate($request, 'real-secret'));
     }
 
     #[Test]
@@ -292,6 +363,34 @@ final class MaxBotManagerTest extends TestCase
         $update = new MessageCreatedUpdate(time(), $message, null);
 
         $dispatcher->dispatch($update);
+    }
+
+    /**
+     * Sends the request through handleWebhook() with a real WebhookHandler.
+     *
+     * @return array{int, bool} The response status code and whether the update reached a handler.
+     */
+    private function handleWebhookWithUpdate(Request $request, ?string $secret = null): array
+    {
+        $this->container->instance(WebhookHandler::class, new WebhookHandler(
+            $this->updateDispatcher,
+            $this->modelFactoryMock,
+            $this->container->make(LoggerInterface::class),
+            $secret,
+        ));
+
+        $this->modelFactoryMock->method('createUpdate')->willReturn(
+            new MessageCreatedUpdate(time(), $this->createMinimalMessage(), 'ru-RU'),
+        );
+
+        $wasDispatched = false;
+        $this->updateDispatcher->addHandler(UpdateType::MessageCreated, function () use (&$wasDispatched) {
+            $wasDispatched = true;
+        });
+
+        $response = $this->manager->handleWebhook($request);
+
+        return [$response->getStatusCode(), $wasDispatched];
     }
 
     private function createMinimalMessage(): Message

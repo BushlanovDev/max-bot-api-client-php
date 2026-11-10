@@ -40,7 +40,8 @@
         "php-mock/php-mock-phpunit": "^2.13",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^12.0",
-        "roave/security-advisories": "dev-latest"
+        "roave/security-advisories": "dev-latest",
+        "symfony/console": "^7.4||^8.0"
     },
     "autoload": {
         "psr-4": {

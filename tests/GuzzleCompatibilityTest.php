@@ -39,6 +39,17 @@ final class GuzzleCompatibilityTest extends TestCase
     }
 
     #[Test]
+    public function sendsALowerCaseMethodInUpperCase(): void
+    {
+        $history = [];
+        $client = $this->client([new Response(200, [], '{"user_id":1}')], $history);
+
+        self::assertSame(['user_id' => 1], $client->request('get', '/me'));
+        self::assertCount(1, $history);
+        self::assertSame('GET', $history[0]['request']->getMethod());
+    }
+
+    #[Test]
     public function preservesHttpErrorsForTheSdkToHandle(): void
     {
         $history = [];

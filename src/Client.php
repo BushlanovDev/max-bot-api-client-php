@@ -61,6 +61,8 @@ final readonly class Client implements ClientApiInterface
      */
     public function request(string $method, string $uri, array $queryParams = [], array $body = []): array
     {
+        $method = strtoupper($method);
+
         if (!empty($this->apiVersion)) {
             $queryParams['v'] = $this->apiVersion;
         }

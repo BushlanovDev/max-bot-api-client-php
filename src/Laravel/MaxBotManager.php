@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Request as RequestAlias;
 use Throwable;
 
 /**
@@ -58,17 +59,19 @@ readonly class MaxBotManager
             /** @var WebhookHandler $webhookHandler */
             $webhookHandler = $this->container->make(WebhookHandler::class);
 
-            $headers = array_filter(array_map(function ($values) {
-                return array_filter($values, fn($value) => $value !== null);
-            }, $request->headers->all()));
+            // WebhookHandler reads only the body and the secret header. Passing nothing else keeps
+            // unrelated request data (other headers, protocol version) away from PSR-7 validation.
+            $secret = array_values(array_map(
+                static fn($value) => (string)$value,
+                array_filter($request->headers->all('X-Max-Bot-Api-Secret'), 'is_scalar'),
+            ));
 
             $webhookHandler->handle(
                 new ServerRequest(
-                    $request->getMethod(),
-                    $request->getUri(),
-                    $headers,
+                    RequestAlias::METHOD_POST,
+                    '',
+                    $secret === [] ? [] : ['X-Max-Bot-Api-Secret' => $secret],
                     $request->getContent(),
-                    str_replace('HTTP/', '', $request->getProtocolVersion() ?? '1.1'),
                 )
             );
 
